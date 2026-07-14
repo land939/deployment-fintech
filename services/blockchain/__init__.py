@@ -1,0 +1,156 @@
+"""Blockchain service for Web3 interactions."""
+
+import json
+import logging
+from typing import Optional
+from web3 import Web3
+from config.settings import Settings
+
+logger = logging.getLogger(__name__)
+
+
+class BlockchainService:
+    """Service for Web3 blockchain interactions."""
+
+    def __init__(self, settings: Settings):
+        """Initialize blockchain connection and contracts."""
+        self.settings = settings
+        self.w3: Optional[Web3] = None
+        self.connected = False
+        self.token_contract = None
+        self.registry_contract = None
+        self.optimizer_contract = None
+
+        if settings.enable_blockchain:
+            self._initialize_connection()
+
+    def _initialize_connection(self) -> None:
+        """Initialize Web3 connection and load contracts."""
+        try:
+            if not self.settings.rpc_url:
+                logger.warning("⚠️  RPC_URL not configured - blockchain disabled")
+                return
+
+            self.w3 = Web3(Web3.HTTPProvider(self.settings.rpc_url))
+
+            if not self.w3.is_connected():
+                logger.error(
+                    f"❌ Failed to connect to blockchain at {self.settings.rpc_url}"
+                )
+                return
+
+            logger.info(f"✅ Connected to blockchain | Chain ID: {self.w3.eth.chain_id}")
+            self.connected = True
+
+            # Load contract ABIs
+            self._load_contracts()
+
+        except Exception as e:
+            logger.error(f"❌ Blockchain initialization failed: {e}")
+            self.connected = False
+
+    def _load_contracts(self) -> None:
+        """Load smart contract instances."""
+        try:
+            # Token contract
+            if self.settings.token_address and self.settings.token_address != "0x0":
+                token_abi = self._load_abi("FintechToken")
+                self.token_contract = self.w3.eth.contract(
+                    address=Web3.to_checksum_address(self.settings.token_address),
+                    abi=token_abi,
+                )
+                logger.info(f"✅ Token contract loaded: {self.settings.token_address}")
+
+            # Registry contract
+            if self.settings.registry_address and self.settings.registry_address != "0x0":
+                registry_abi = self._load_abi("FraudRegistry")
+                self.registry_contract = self.w3.eth.contract(
+                    address=Web3.to_checksum_address(self.settings.registry_address),
+                    abi=registry_abi,
+                )
+                logger.info(f"✅ Registry contract loaded: {self.settings.registry_address}")
+
+            # Optimizer contract
+            if self.settings.optimizer_address and self.settings.optimizer_address != "0x0":
+                optimizer_abi = self._load_abi("TransactionOptimizer")
+                self.optimizer_contract = self.w3.eth.contract(
+                    address=Web3.to_checksum_address(self.settings.optimizer_address),
+                    abi=optimizer_abi,
+                )
+                logger.info(f"✅ Optimizer contract loaded: {self.settings.optimizer_address}")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to load contracts: {e}")
+
+    def _load_abi(self, contract_name: str) -> list:
+        """Load contract ABI from JSON file."""
+        try:
+            with open(f"abi/{contract_name}.json") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            logger.warning(f"⚠️  ABI file not found: abi/{contract_name}.json")
+            return []
+
+    def get_balance(self, address: str) -> Optional[float]:
+        """Get token balance for an address."""
+        if not self.connected or not self.token_contract:
+            logger.warning("⚠️  Blockchain not connected or token contract not loaded")
+            return None
+
+        try:
+            checksum_addr = Web3.to_checksum_address(address)
+            balance_wei = self.token_contract.functions.balanceOf(checksum_addr).call()
+            return balance_wei / 10**18
+        except Exception as e:
+            logger.error(f"❌ Failed to get balance for {address}: {e}")
+            return None
+
+    def send_transaction(
+        self,
+        to_address: str,
+        amount_tokens: float,
+        from_address: Optional[str] = None,
+    ) -> Optional[dict]:
+        """Send tokens (requires admin key or signed transaction)."""
+        if not self.connected or not self.token_contract:
+            return {"error": "Blockchain not connected"}
+
+        try:
+            amount_wei = int(amount_tokens * 10**18)
+            to_checksum = Web3.to_checksum_address(to_address)
+
+            # Build transaction
+            tx = self.token_contract.functions.transfer(to_checksum, amount_wei).build_transaction(
+                {
+                    "from": from_address or self.settings.admin_address,
+                    "gas": 100000,
+                    "gasPrice": self.w3.eth.gas_price,
+                    "nonce": self.w3.eth.get_transaction_count(
+                        from_address or self.settings.admin_address
+                    ),
+                }
+            )
+
+            logger.info(f"🔗 Transaction built: {amount_tokens} FTK to {to_address}")
+            return {"tx": tx, "amount": amount_tokens}
+
+        except Exception as e:
+            logger.error(f"❌ Transaction building failed: {e}")
+            return {"error": str(e)}
+
+    def get_network_info(self) -> dict:
+        """Get blockchain network information."""
+        if not self.connected:
+            return {"connected": False, "error": "Blockchain not connected"}
+
+        try:
+            return {
+                "connected": True,
+                "chain_id": self.w3.eth.chain_id,
+                "latest_block": self.w3.eth.block_number,
+                "gas_price": float(self.w3.eth.gas_price),
+                "rpc_url": self.settings.rpc_url,
+            }
+        except Exception as e:
+            logger.error(f"❌ Failed to get network info: {e}")
+            return {"connected": False, "error": str(e)}

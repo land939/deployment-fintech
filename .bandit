@@ -1,0 +1,4 @@
+[bandit]
+exclude_dirs = [tests, venv, .venv, migrations]
+skips = [B101, B601, B602]  # assert_used, paramiko_calls
+tests = [B102, B303, B304, B305, B306]

@@ -1,0 +1,32 @@
+"""Pylint configuration."""
+
+[MASTER]
+max-line-length = 100
+load-plugins = []
+unsafe-load-any-extension = no
+
+[FORMAT]
+max-line-length = 100
+indent-string = "    "
+
+[MESSAGES CONTROL]
+disable =
+    C0111,  # missing-docstring
+    C0103,  # invalid-name
+    W0212,  # protected-access
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    R0914,  # too-many-locals
+    W0613,  # unused-argument
+    E0213,  # no-self-argument
+
+[DESIGN]
+max-attributes = 10
+max-locals = 20
+max-branches = 15
+max-statements = 50
+
+[SIMILARITIES]
+min-similarity-lines = 5
+ignore-comments = yes
+ignore-docstrings = yes

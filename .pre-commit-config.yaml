@@ -1,0 +1,87 @@
+minimum_pre_commit_version: "3.0.0"
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff check
+        entry: ruff check --fix
+        language: python
+        additional_dependencies: ["ruff==0.2.2"]
+        types_or: [python]
+        pass_filenames: true
+
+      - id: ruff-format
+        name: Ruff format
+        entry: ruff format
+        language: python
+        additional_dependencies: ["ruff==0.2.2"]
+        types_or: [python]
+        pass_filenames: true
+
+      - id: mypy
+        name: MyPy (type checking)
+        entry: mypy --config-file pyproject.toml
+        language: python
+        additional_dependencies:
+          - "mypy==1.8.0"
+          - "sqlalchemy[mypy]==2.0.27"
+          - "pydantic==2.6.3"
+        types_or: [python]
+        files: >-
+          ^(config/|
+          database/|
+          services/|
+          routers/|
+          schemas/|
+          utils/)
+        exclude: >-
+          ^(database/versions/|
+          migrations/)
+
+      - id: bandit
+        name: Bandit (security)
+        entry: bandit -c .bandit -r config database services routers schemas utils
+        language: python
+        additional_dependencies: ["bandit==1.7.6"]
+        pass_filenames: false
+
+      - id: pylint-module-size
+        name: Pylint module size (max 400 lines)
+        entry: pylint
+        language: python
+        additional_dependencies: ["pylint==3.0.3"]
+        args:
+          - --rcfile=.pylintrc
+          - --score=n
+          - --reports=n
+        files: >-
+          ^(config\.py|
+          config/|
+          services/|
+          routers/|
+          schemas/|
+          utils/)
+        exclude: >-
+          ^(database/|
+          migrations/)
+
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.4.1
+    hooks:
+      - id: pycln
+        args: ["--all"]
+        types_or: [python]
