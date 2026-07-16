@@ -55,6 +55,7 @@ python3.12 -m venv venv
 source venv/bin/activate
 
 pip install -e ".[dev]"
+# ou: pip install -r requirements-dev.txt
 cp .env.example .env   # puis renseigner les secrets
 ```
 
