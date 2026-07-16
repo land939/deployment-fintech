@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 
 from config import Settings, get_settings, setup_logging, validate_required_settings
 from database import init_db, set_session_factory
+from database.bootstrap import ensure_superadmin
 from database.models import Transaction
 from routers import auth, fraud, pages, superadmin, transactions
 from schemas import HealthResponse, StatusResponse
@@ -46,6 +47,7 @@ async def lifespan(app: FastAPI):
         logger.info("Initialisation base de données...")
         engine, async_session_factory = await init_db(settings.database_url)
         set_session_factory(async_session_factory)
+        await ensure_superadmin(async_session_factory, settings)
         logger.info("Base de données prête")
 
         logger.info("Chargement modèles ML...")

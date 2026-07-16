@@ -38,9 +38,13 @@ class TestLoginRequest:
         req = LoginRequest(email=valid_email, password="x")
         assert req.email == valid_email
 
-    def test_rejects_invalid_email(self):
+    def test_accepts_local_dev_email(self):
+        req = LoginRequest(email="admin@gta-fintech.local", password="x")
+        assert req.email.endswith(".local")
+
+    def test_rejects_too_short_email(self):
         with pytest.raises(ValidationError):
-            LoginRequest(email="not-an-email", password="x")
+            LoginRequest(email="ab", password="x")
 
 
 class TestTransactionRequest:

@@ -91,7 +91,11 @@
           localStorage.setItem('role',   data.role   || 'user');
           window.location.href = data.role === 'superadmin' ? '/superadmin' : '/dashboard';
         } else {
-          errorMsg.textContent   = '⚠ ' + (data.error || 'Identifiants incorrects');
+          const msg = data.error
+            || (typeof data.detail === 'string' ? data.detail : null)
+            || (Array.isArray(data.detail) ? data.detail.map(d => d.msg).join(' · ') : null)
+            || 'Identifiants incorrects';
+          errorMsg.textContent   = '⚠ ' + msg;
           errorMsg.style.display = 'block';
         }
       } catch (err) {

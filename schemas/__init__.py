@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 # ════════════════════════════════════════════════════════════════
 # Authentication Schemas
@@ -12,7 +12,8 @@ from pydantic import BaseModel, EmailStr, Field
 class RegisterRequest(BaseModel):
     """User registration request."""
 
-    email: EmailStr
+    # ponytail: str not EmailStr — email-validator rejects .local (dev SUPERADMIN_*)
+    email: str = Field(..., min_length=3)
     password: str = Field(..., min_length=8)
     wallet_address: str = Field(..., pattern=r"^0x[a-fA-F0-9]{40}$")
 
@@ -20,14 +21,14 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     """User login request."""
 
-    email: EmailStr
+    email: str = Field(..., min_length=3)
     password: str
 
 
 class ForgotPasswordRequest(BaseModel):
     """Forgot password request."""
 
-    email: EmailStr
+    email: str = Field(..., min_length=3)
 
 
 class ResetPasswordRequest(BaseModel):
