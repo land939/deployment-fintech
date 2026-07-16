@@ -12,7 +12,7 @@ on-chain), autour d'un token utilitaire **FTK**.
 | `routers/` | Routes auth, transactions, fraude, pages UI, superadmin |
 | `services/ml/` | Détection de fraude (11 features calculables en production) |
 | `services/blockchain/` | Intégration Web3 (token, registre, optimisation) |
-| `database/` | Modèles SQLAlchemy async (PostgreSQL) |
+| `database/` | Modèles SQLAlchemy async (SQLite local / PostgreSQL Docker) |
 | `FintechToken.sol` | Token ERC-20 « FTK » avec burn, blacklist et pause |
 | `FraudRegistry.sol` | Registre on-chain des fraudes détectées par l'IA |
 | `TransactionOptimizer.sol` | Paramètres d'optimisation on-chain |
@@ -42,8 +42,7 @@ Réentraînement : `python train_fraud_model.py`
 ### Prérequis
 
 - Python 3.12+
-- PostgreSQL 14+ (ou SQLite async pour les tests)
-- Docker (optionnel)
+- Docker (optionnel — PostgreSQL + API conteneurisés)
 - Ganache / nœud Ethereum (optionnel)
 
 ### Installation
@@ -59,29 +58,30 @@ pip install -e ".[dev]"
 cp .env.example .env   # puis renseigner les secrets
 ```
 
-### Lancer l'API + UI
+### Lancer l'API + UI (sans Docker)
+
+Par défaut `.env` utilise **SQLite** (`./gta_fintech.db`) — aucun Postgres requis.
 
 ```bash
-# Port par défaut du Makefile : 8765 (8000 est souvent pris)
-make run
-# ou
 uvicorn main:app --reload --host 127.0.0.1 --port 8765
-```
-
-Sans PostgreSQL local, utilisez SQLite dans `.env` :
-
-```
-DATABASE_URL=sqlite+aiosqlite:///./gta_fintech.db
+# ou
+make run
 ```
 
 - UI : http://127.0.0.1:8765/
 - Docs OpenAPI : http://127.0.0.1:8765/docs
 
-Vérification rapide (serveur déjà lancé) :
+### Lancer avec Docker (PostgreSQL)
+
+Compose injecte `DATABASE_URL` Postgres pour le service `api` :
 
 ```bash
-make smoke
+make docker-up
+# ou
+docker compose -f docker/docker-compose.yml up -d
 ```
+
+Pour un Postgres local hors Docker, décommentez la ligne PostgreSQL dans `.env`.
 
 ### Tests
 
@@ -103,7 +103,7 @@ make docker-up
 Les secrets vivent dans `.env` (jamais versionné) :
 
 ```
-DATABASE_URL=
+DATABASE_URL=sqlite+aiosqlite:///./gta_fintech.db   # local ; Postgres via Docker
 SECRET_KEY=
 SUPERADMIN_EMAIL=
 SUPERADMIN_PASSWORD=
@@ -113,7 +113,6 @@ ADMIN_PRIVATE_KEY=       # NE JAMAIS COMMITER
 TOKEN_ADDRESS=
 REGISTRY_ADDRESS=
 OPTIMIZER_ADDRESS=
-JWT_SECRET=              # ou SECRET_KEY
 MAIL_SERVER=
 MAIL_PORT=
 MAIL_USERNAME=

@@ -24,8 +24,9 @@ class Settings(BaseSettings):
     api_workers: int = 4
     api_log_level: str = "info"
 
-    # Database
-    database_url: str
+    # Database — SQLite par défaut (local sans Docker).
+    # Docker Compose force PostgreSQL via DATABASE_URL.
+    database_url: str = "sqlite+aiosqlite:///./gta_fintech.db"
 
     # Security & JWT
     secret_key: str

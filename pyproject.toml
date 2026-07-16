@@ -19,7 +19,8 @@ dependencies = [
 
     # Database
     "sqlalchemy==2.0.27",
-    "asyncpg==0.29.0",
+    "aiosqlite==0.20.0",  # local / sans Docker
+    "asyncpg==0.29.0",  # PostgreSQL (Docker / prod)
     "psycopg[binary]==3.1.18",
     "alembic==1.13.1",
 
@@ -57,7 +58,6 @@ dev = [
     "bandit==1.7.6",
     "pylint==3.0.3",
     "black==24.1.1",
-    "aiosqlite==0.20.0",
 ]
 
 # Flat multi-package layout — setuptools won't auto-discover this
