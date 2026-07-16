@@ -1,4 +1,4 @@
-.PHONY: help install dev-install lint format type-check bandit security test pre-commit clean setup-db migrate docker-build docker-up docker-down docker-logs docker-ps docker-shell docker-test
+.PHONY: help install dev-install lint format type-check bandit security test pre-commit clean setup-db migrate run smoke docker-build docker-up docker-down docker-logs docker-ps docker-shell docker-test
 
 # Prefer project venv when present so `make` works without `source venv/bin/activate`
 PYTHON ?= $(shell if [ -x venv/bin/python ]; then echo venv/bin/python; else echo python3; fi)
@@ -85,8 +85,22 @@ setup-db:
 migrate:
 	$(PYTHON) -m alembic upgrade head
 
+# Port 8000 is often taken (e.g. Infisical). Override: make run PORT=9000
+PORT ?= 8765
+
 run:
-	$(PYTHON) -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+	@if ss -H -tln 2>/dev/null | grep -qE ":$(PORT)\\b"; then \
+		echo "Port $(PORT) déjà utilisé. Essayez: make run PORT=8766"; exit 1; \
+	fi
+	$(PYTHON) -m uvicorn main:app --reload --host 127.0.0.1 --port $(PORT)
+
+smoke:
+	@echo "Smoke contre http://127.0.0.1:$(PORT) (serveur déjà lancé requis)"
+	curl -sf "http://127.0.0.1:$(PORT)/health" | $(PYTHON) -m json.tool
+	curl -sf -o /dev/null -w "GET / -> %{http_code}\n" "http://127.0.0.1:$(PORT)/"
+	curl -sf -o /dev/null -w "GET /static/app.css -> %{http_code}\n" "http://127.0.0.1:$(PORT)/static/app.css"
+	curl -sf -X POST "http://127.0.0.1:$(PORT)/fraud/check" \
+		-H 'Content-Type: application/json' -d '{"amount":100,"hour":14}' | $(PYTHON) -m json.tool
 
 # Docker Compose v2 plugin (`docker compose`, not legacy `docker-compose`)
 docker-build:

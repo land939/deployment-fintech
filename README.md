@@ -62,13 +62,26 @@ cp .env.example .env   # puis renseigner les secrets
 ### Lancer l'API + UI
 
 ```bash
+# Port par défaut du Makefile : 8765 (8000 est souvent pris)
 make run
 # ou
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uvicorn main:app --reload --host 127.0.0.1 --port 8765
 ```
 
-- UI : http://127.0.0.1:8000/
-- Docs OpenAPI : http://127.0.0.1:8000/docs
+Sans PostgreSQL local, utilisez SQLite dans `.env` :
+
+```
+DATABASE_URL=sqlite+aiosqlite:///./gta_fintech.db
+```
+
+- UI : http://127.0.0.1:8765/
+- Docs OpenAPI : http://127.0.0.1:8765/docs
+
+Vérification rapide (serveur déjà lancé) :
+
+```bash
+make smoke
+```
 
 ### Tests
 
