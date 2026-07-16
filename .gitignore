@@ -1,25 +1,54 @@
+# Secrets / local env
 .env
+.env.local
+.env.*.local
+
+# Python
 .ipynb_checkpoints/
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Data / local DBs
 creditcard.csv
 *.csv
 instance/
 *.db
+*.sqlite3
+_smoke.db
+
+# Logs (never commit)
 *.log
+
+# Tooling caches
 .idea/
 .vscode/
-venv/
-.venv/
 .coverage
 htmlcov/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-*.egg-info/
-dist/
-build/
 .serena/
 .understand-anything/
 .dockerignore.bak
+
+# Legacy notebook (pipeline is train_fraud_model.py)
+fraud_detection_IA.ipynb
+
+# Training-only / duplicate ML artifacts (regen: python train_fraud_model.py)
+# KEEP tracked for runtime:
+#   models/fraud_detector.pkl
+#   models/scaler.pkl
+#   models/feature_columns.json
+#   models/model_metrics.json
+#   static/models/
+models/random_forest.pkl
+models/xgboost.pkl
+models/eda_plots.png
+models/model_comparison.png
+models/feature_importance.png
