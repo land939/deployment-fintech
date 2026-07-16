@@ -1,31 +1,30 @@
-"""
-reset_db.py Vide complètement la base de données Fintech GTA
-Supprime tous les utilisateurs, transactions, alertes de fraude,
-tokens de réinitialisation et journaux d'audit.
+"""Vide et recrée les tables (async).
 
-Utilisation :
-  python reset_db.py            -> demande confirmation avant de vider
-  python reset_db.py --force    -> vide sans demander confirmation
+Usage:
+  python reset_db.py --force
 """
 
+import asyncio
 import sys
 
-from app import app, db
+from config import get_settings
+from database import Base, init_db
 
 
-def reset_database():
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-    print(" Base de données entièrement vidée et recréée (tables vides).")
+async def reset_database() -> None:
+    settings = get_settings()
+    engine, _ = await init_db(settings.database_url)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    await engine.dispose()
+    print("Base de données vidée et tables recréées.")
 
 
 if __name__ == "__main__":
     if "--force" not in sys.argv:
-        reponse = input(
-            " Cette action supprime TOUS les utilisateurs, transactions et logs. Continuer ? (oui/non) : "
-        )
+        reponse = input("Supprimer toutes les données ? (oui/non) : ")
         if reponse.strip().lower() not in ("oui", "o", "yes", "y"):
             print("Annulé.")
             sys.exit(0)
-    reset_database()
+    asyncio.run(reset_database())

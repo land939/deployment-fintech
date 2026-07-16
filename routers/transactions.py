@@ -11,7 +11,7 @@ from config import SettingsDep
 from database import DbSession
 from database.models import Transaction, User
 from schemas import TransactionRequest, TransactionResponse
-from services.ml import FraudDetectionService
+from services.ml import get_fraud_service
 from services.ml.features import build_fraud_features
 from utils import is_valid_wallet
 
@@ -48,7 +48,13 @@ async def send_transaction(
             detail="Utilisateur introuvable",
         )
 
-    ml_service = FraudDetectionService(settings)
+    ml_service = get_fraud_service()
+    if ml_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Modèles ML indisponibles",
+        )
+
     if request.features:
         fraud_features = request.features
     else:

@@ -6,12 +6,12 @@ la prédiction en production.
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import Selectable, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from database.models import Transaction, User
 
-# Plafond du délai depuis la dernière tx (aligné sur train_fraud_model.py)
 CAP_SILENCE_S = 7 * 86400
 
 FEATURE_COLS = [
@@ -29,6 +29,14 @@ FEATURE_COLS = [
 ]
 
 
+async def _scalar(db: AsyncSession, stmt: Selectable) -> float | int | None:
+    return (await db.execute(stmt)).scalar_one()
+
+
+def _sender_eq(sender: str) -> ColumnElement:
+    return func.lower(Transaction.sender) == sender
+
+
 async def build_fraud_features(
     db: AsyncSession,
     user: User | None,
@@ -40,86 +48,63 @@ async def build_fraud_features(
     now = datetime.utcnow()
     sender = (user.wallet_address if user else "").lower()
     receiver_l = receiver.lower()
+    sender_match = _sender_eq(sender)
 
-    base = select(Transaction).where(func.lower(Transaction.sender) == sender)
-
-    prev_1h = (
-        await db.execute(
-            select(func.count())
-            .select_from(Transaction)
-            .where(
-                func.lower(Transaction.sender) == sender,
-                Transaction.created_at >= now - timedelta(hours=1),
-            )
-        )
-    ).scalar_one()
-
-    prev_24h = (
-        await db.execute(
-            select(func.count())
-            .select_from(Transaction)
-            .where(
-                func.lower(Transaction.sender) == sender,
-                Transaction.created_at >= now - timedelta(hours=24),
-            )
-        )
-    ).scalar_one()
-
-    # Moyenne sur transactions légitimes uniquement (blocked=False)
-    n_legit = (
-        await db.execute(
-            select(func.count())
-            .select_from(Transaction)
-            .where(
-                func.lower(Transaction.sender) == sender,
-                Transaction.blocked.is_(False),
-            )
-        )
-    ).scalar_one()
-
-    avg_amt = (
-        await db.execute(
-            select(func.avg(Transaction.amount)).where(
-                func.lower(Transaction.sender) == sender,
-                Transaction.blocked.is_(False),
-            )
-        )
-    ).scalar_one()
-
-    last_tx = (
-        (await db.execute(base.order_by(Transaction.created_at.desc()).limit(1))).scalars().first()
+    prev_1h = await _scalar(
+        db,
+        select(func.count())
+        .select_from(Transaction)
+        .where(sender_match, Transaction.created_at >= now - timedelta(hours=1)),
     )
-
-    frauds = (
-        await db.execute(
-            select(func.count())
-            .select_from(Transaction)
-            .where(
-                func.lower(Transaction.sender) == sender,
-                Transaction.blocked.is_(True),
+    prev_24h = await _scalar(
+        db,
+        select(func.count())
+        .select_from(Transaction)
+        .where(sender_match, Transaction.created_at >= now - timedelta(hours=24)),
+    )
+    n_legit = await _scalar(
+        db,
+        select(func.count())
+        .select_from(Transaction)
+        .where(sender_match, Transaction.blocked.is_(False)),
+    )
+    avg_amt = await _scalar(
+        db,
+        select(func.avg(Transaction.amount)).where(sender_match, Transaction.blocked.is_(False)),
+    )
+    last_tx = (
+        (
+            await db.execute(
+                select(Transaction)
+                .where(sender_match)
+                .order_by(Transaction.created_at.desc())
+                .limit(1)
             )
         )
-    ).scalar_one()
-
-    known = (
-        await db.execute(
-            select(func.count())
-            .select_from(Transaction)
-            .where(
-                func.lower(Transaction.sender) == sender,
-                func.lower(Transaction.receiver) == receiver_l,
-            )
-        )
-    ).scalar_one()
-
+        .scalars()
+        .first()
+    )
+    frauds = await _scalar(
+        db,
+        select(func.count())
+        .select_from(Transaction)
+        .where(sender_match, Transaction.blocked.is_(True)),
+    )
+    known = await _scalar(
+        db,
+        select(func.count())
+        .select_from(Transaction)
+        .where(sender_match, func.lower(Transaction.receiver) == receiver_l),
+    )
     recv_24h = (
-        await db.execute(
+        await _scalar(
+            db,
             select(func.count(func.distinct(func.lower(Transaction.receiver)))).where(
-                func.lower(Transaction.sender) == sender,
-                Transaction.created_at >= now - timedelta(hours=24),
-            )
+                sender_match, Transaction.created_at >= now - timedelta(hours=24)
+            ),
         )
-    ).scalar_one() or 0
+        or 0
+    )
 
     account_age = (
         (now - user.created_at).total_seconds() / 86400 if user and user.created_at else 0.0
@@ -135,11 +120,11 @@ async def build_fraud_features(
         "hour": float(hour if hour is not None else datetime.now().hour),
         "day_of_week": float(now.weekday()),
         "account_age_days": float(max(0.0, account_age)),
-        "tx_count_1h": float(prev_1h),
-        "tx_count_24h": float(prev_24h),
+        "tx_count_1h": float(prev_1h or 0),
+        "tx_count_24h": float(prev_24h or 0),
         "amount_avg_ratio": float(amount / avg_amt) if n_legit and avg_amt else 1.0,
         "seconds_since_last_tx": float(since_last),
         "is_new_receiver": 0.0 if known else 1.0,
         "unique_receivers_24h": float(recv_24h),
-        "past_fraud_count": float(frauds),
+        "past_fraud_count": float(frauds or 0),
     }

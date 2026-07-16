@@ -1,7 +1,6 @@
 """API Super Admin (stats, chaîne d'audit, métriques modèle)."""
 
 import json
-import logging
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, status
@@ -10,10 +9,17 @@ from sqlalchemy import func, select
 from database import DbSession
 from database.models import BlockchainAuditBlock, FraudAlert, Transaction, User
 
-logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/superadmin/api", tags=["Super Admin"])
-
 METRICS_PATH = Path(__file__).resolve().parent.parent / "models" / "model_metrics.json"
+
+
+def _chain_valid(blocks: list[BlockchainAuditBlock]) -> tuple[bool, int | None]:
+    prev_hash = "0" * 64
+    for i, blk in enumerate(blocks):
+        if blk.block_index != i or blk.previous_hash != prev_hash:
+            return False, i
+        prev_hash = blk.block_hash
+    return True, None
 
 
 @router.get("/stats")
@@ -29,7 +35,6 @@ async def stats(db: DbSession):
     total_blocks = (
         await db.execute(select(func.count()).select_from(BlockchainAuditBlock))
     ).scalar_one()
-
     blocks = (
         (
             await db.execute(
@@ -39,21 +44,14 @@ async def stats(db: DbSession):
         .scalars()
         .all()
     )
-    chain_valid = True
-    prev_hash = "0" * 64
-    for i, blk in enumerate(blocks):
-        if blk.block_index != i or blk.previous_hash != prev_hash:
-            chain_valid = False
-            break
-        prev_hash = blk.block_hash
-
+    valid, _ = _chain_valid(blocks)
     return {
         "total_users": total_users,
         "total_transactions": total_tx,
         "total_blocked": total_blocked,
         "total_alerts": total_alerts,
         "total_audit_blocks": total_blocks,
-        "chain_valid": chain_valid,
+        "chain_valid": valid,
     }
 
 
@@ -74,7 +72,7 @@ async def list_transactions(db: DbSession, limit: int = 30):
                 "risk_score": tx.risk_score,
                 "risk_level": tx.risk_level,
                 "blocked": tx.blocked,
-                "approved": getattr(tx, "approved", False),
+                "approved": tx.approved,
                 "status": tx.status,
                 "created_at": tx.created_at.isoformat() if tx.created_at else None,
             }
@@ -90,8 +88,7 @@ async def approve_transaction(tx_ref: str, db: DbSession):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction introuvable")
     tx.blocked = False
     tx.status = "approved"
-    if hasattr(tx, "approved"):
-        tx.approved = True
+    tx.approved = True
     await db.commit()
     return {"ok": True, "tx_ref": tx_ref}
 
@@ -185,9 +182,7 @@ async def chain_verify(db: DbSession):
         .scalars()
         .all()
     )
-    prev_hash = "0" * 64
-    for i, blk in enumerate(blocks):
-        if blk.block_index != i or blk.previous_hash != prev_hash:
-            return {"valid": False, "broken_at": i}
-        prev_hash = blk.block_hash
+    valid, broken_at = _chain_valid(blocks)
+    if not valid:
+        return {"valid": False, "broken_at": broken_at}
     return {"valid": True, "blocks": len(blocks)}

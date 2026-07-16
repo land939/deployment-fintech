@@ -109,7 +109,7 @@ class ErrorResponse(BaseModel):
 
 
 class StatusResponse(BaseModel):
-    """Statut applicatif (compat badge UI + détail)."""
+    """Statut applicatif (badge UI)."""
 
     app_version: str
     environment: str
@@ -117,9 +117,6 @@ class StatusResponse(BaseModel):
     chain_id: int | None = None
     ia_model_loaded: bool = False
     total_transactions: int = 0
-    database: dict = {}
-    blockchain: dict = {}
-    ml_models: dict = {}
 
 
 class HealthResponse(BaseModel):

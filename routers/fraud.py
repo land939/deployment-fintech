@@ -10,7 +10,7 @@ from config import SettingsDep
 from database import DbSession
 from database.models import FraudAlert
 from schemas import FraudCheckRequest, FraudCheckResponse
-from services.ml import FraudDetectionService
+from services.ml import get_fraud_service
 from services.ml.features import FEATURE_COLS
 
 logger = logging.getLogger(__name__)
@@ -29,9 +29,14 @@ async def check_fraud(
             detail="Service de détection de fraude désactivé",
         )
 
-    try:
-        ml_service = FraudDetectionService(settings)
+    ml_service = get_fraud_service()
+    if ml_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Modèles ML indisponibles",
+        )
 
+    try:
         transaction_data = dict.fromkeys(FEATURE_COLS, 0.0)
         transaction_data["amount"] = float(request.amount)
         hour = request.hour if request.hour is not None else request.hour_of_day
@@ -54,13 +59,6 @@ async def check_fraud(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Échec de la détection de fraude",
             )
-
-        logger.info(
-            "Contrôle fraude: amount=%s risk=%s blocked=%s",
-            request.amount,
-            result["risk_level"],
-            result["blocked"],
-        )
 
         return FraudCheckResponse(**result)
 

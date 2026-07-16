@@ -45,6 +45,30 @@ async def test_ensure_superadmin_creates_user(settings):
     session.commit.assert_awaited()
 
 
+@pytest.mark.asyncio
+async def test_ensure_superadmin_skips_existing(settings, valid_wallet_address):
+    existing = User(
+        email=settings.superadmin_email.lower(),
+        wallet_address=valid_wallet_address,
+        role="superadmin",
+    )
+    session = AsyncMock()
+    session.execute = AsyncMock(return_value=_scalar_result(existing))
+    session.commit = AsyncMock()
+    session.add = MagicMock()
+
+    class _CM:
+        async def __aenter__(self):
+            return session
+
+        async def __aexit__(self, *args):
+            return None
+
+    await ensure_superadmin(MagicMock(return_value=_CM()), settings)
+    session.add.assert_not_called()
+    session.commit.assert_not_awaited()
+
+
 def test_login_accepts_local_email_domain(
     settings, mock_db_session, monkeypatch, valid_wallet_address
 ):

@@ -8,59 +8,29 @@ from fastapi.templating import Jinja2Templates
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
 router = APIRouter(tags=["Pages"])
 
-
-def _render(request: Request, name: str) -> HTMLResponse:
-    return templates.TemplateResponse(request, name)
-
-
-@router.get("/", response_class=HTMLResponse)
-async def page_login(request: Request):
-    return _render(request, "login.html")
-
-
-@router.get("/register", response_class=HTMLResponse)
-async def page_register(request: Request):
-    return _render(request, "register.html")
-
-
-@router.get("/forgot-password", response_class=HTMLResponse)
-async def page_forgot_password(request: Request):
-    return _render(request, "forgot_password.html")
+_PAGES = (
+    ("/", "login.html"),
+    ("/register", "register.html"),
+    ("/forgot-password", "forgot_password.html"),
+    ("/reset-password", "reset_password.html"),
+    ("/dashboard", "dashboard.html"),
+    ("/transactions", "transactions.html"),
+    ("/fraudes", "fraudes.html"),
+    ("/token", "token.html"),
+    ("/optimisation", "optimisation.html"),
+    ("/superadmin", "superadmin.html"),
+)
 
 
-@router.get("/reset-password", response_class=HTMLResponse)
-async def page_reset_password(request: Request):
-    return _render(request, "reset_password.html")
+def _make_page(name: str):
+    async def handler(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(request, name)
+
+    handler.__name__ = f"page_{name.removesuffix('.html')}"
+    return handler
 
 
-@router.get("/dashboard", response_class=HTMLResponse)
-async def page_dashboard(request: Request):
-    return _render(request, "dashboard.html")
-
-
-@router.get("/transactions", response_class=HTMLResponse)
-async def page_transactions(request: Request):
-    return _render(request, "transactions.html")
-
-
-@router.get("/fraudes", response_class=HTMLResponse)
-async def page_fraudes(request: Request):
-    return _render(request, "fraudes.html")
-
-
-@router.get("/token", response_class=HTMLResponse)
-async def page_token(request: Request):
-    return _render(request, "token.html")
-
-
-@router.get("/optimisation", response_class=HTMLResponse)
-async def page_optimisation(request: Request):
-    return _render(request, "optimisation.html")
-
-
-@router.get("/superadmin", response_class=HTMLResponse)
-async def page_superadmin(request: Request):
-    return _render(request, "superadmin.html")
+for _path, _tpl in _PAGES:
+    router.add_api_route(_path, _make_page(_tpl), methods=["GET"], response_class=HTMLResponse)

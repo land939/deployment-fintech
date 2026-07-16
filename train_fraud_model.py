@@ -282,7 +282,7 @@ def compute_features(all_users, events):
             # Moyenne sur l'historique LÉGITIME uniquement : une fraude déjà
             # bloquée ne définit pas le comportement normal de l'utilisateur
             # (sinon un gros montant bloqué gonfle la moyenne et camoufle
-            # les fraudes suivantes). Même définition dans app.py.
+            # les fraudes suivantes). Même définition dans services/ml/features.py.
             legit = [h[1] for h in history if h[3] == 0]
             avg_amt = float(np.mean(legit)) if legit else amount
 
@@ -323,11 +323,11 @@ def evaluate(name, model, X_test, y_test):
     )
     print(confusion_matrix(y_test, pred))
     print(classification_report(y_test, pred, target_names=["normal", "fraude"], digits=3))
-    # Taux de blocage aux seuils utilisés par app.py (bloqué si proba >= 0.60)
+    # Taux de blocage aux seuils utilisés en production (bloqué si proba >= 0.60)
     blocked = proba >= 0.60
     frauds = y_test.values == 1
     print(
-        f"Seuil app.py (0.60) : {blocked[frauds].mean() * 100:.1f}% des fraudes bloquées, "
+        f"Seuil production (0.60) : {blocked[frauds].mean() * 100:.1f}% des fraudes bloquées, "
         f"{blocked[~frauds].mean() * 100:.2f}% de faux positifs bloqués"
     )
     return roc_auc_score(y_test, proba)
