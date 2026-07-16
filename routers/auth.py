@@ -2,19 +2,25 @@
 
 import logging
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import Settings, get_settings
-from database import get_session
-from database.models import User, PasswordResetToken
-from schemas import RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest, AuthResponse
+from fastapi import APIRouter, HTTPException, status
+
+from config import SettingsDep
+from database import DbSession
+from database.models import PasswordResetToken, User
+from schemas import (
+    AuthResponse,
+    ForgotPasswordRequest,
+    LoginRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+)
 from utils import (
+    build_reset_email_html,
+    generate_reset_token,
+    is_strong_password,
     is_valid_email,
     is_valid_wallet,
-    is_strong_password,
-    generate_reset_token,
-    build_reset_email_html,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,8 +30,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
-    db: AsyncSession = Depends(get_session),
-    settings: Settings = Depends(get_settings),
+    db: DbSession,
+    settings: SettingsDep,
 ):
     """Register a new user."""
     # Validate inputs
@@ -50,9 +56,7 @@ async def register(
     # Check if email already exists
     from sqlalchemy import select
 
-    existing_user = await db.execute(
-        select(User).where(User.email == request.email.lower())
-    )
+    existing_user = await db.execute(select(User).where(User.email == request.email.lower()))
     if existing_user.scalars().first():
         logger.warning(f"⚠️  Registration attempt with existing email: {request.email}")
         raise HTTPException(
@@ -85,8 +89,8 @@ async def register(
 @router.post("/login", response_model=AuthResponse)
 async def login(
     request: LoginRequest,
-    db: AsyncSession = Depends(get_session),
-    settings: Settings = Depends(get_settings),
+    db: DbSession,
+    settings: SettingsDep,
 ):
     """User login with email and password."""
     if not is_valid_email(request.email):
@@ -98,9 +102,7 @@ async def login(
     # Get user
     from sqlalchemy import select
 
-    result = await db.execute(
-        select(User).where(User.email == request.email.lower())
-    )
+    result = await db.execute(select(User).where(User.email == request.email.lower()))
     user = result.scalars().first()
 
     if not user:
@@ -152,13 +154,14 @@ async def login(
         user_id=user.id,
         email=user.email,
         role=user.role,
+        wallet=user.wallet_address,
     )
 
 
 @router.post("/forgot-password")
 async def forgot_password(
     request: ForgotPasswordRequest,
-    db: AsyncSession = Depends(get_session),
+    db: DbSession,
 ):
     """Request password reset."""
     if not is_valid_email(request.email):
@@ -167,9 +170,7 @@ async def forgot_password(
 
     from sqlalchemy import select
 
-    result = await db.execute(
-        select(User).where(User.email == request.email.lower())
-    )
+    result = await db.execute(select(User).where(User.email == request.email.lower()))
     user = result.scalars().first()
 
     if not user:
@@ -188,7 +189,8 @@ async def forgot_password(
 
     # Build reset link
     reset_link = f"http://localhost:8000/reset-password?token={raw_token}"
-    email_html = build_reset_email_html(reset_link, 30)
+    _email_html = build_reset_email_html(reset_link, 30)
+    logger.debug("prepared email html bytes=%s", len(_email_html))
 
     # TODO: Send email
     logger.info(f"📧 Password reset requested: {request.email}")
@@ -200,7 +202,7 @@ async def forgot_password(
 @router.post("/reset-password")
 async def reset_password(
     request: ResetPasswordRequest,
-    db: AsyncSession = Depends(get_session),
+    db: DbSession,
 ):
     """Reset password with token."""
     import hashlib

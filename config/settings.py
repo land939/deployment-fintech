@@ -1,9 +1,11 @@
 """Configuration and settings management for GTA Fintech."""
 
-from pydantic_settings import BaseSettings
-from functools import lru_cache
-from typing import Optional
 import logging
+from functools import lru_cache
+from typing import Annotated
+
+from fastapi import Depends
+from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,8 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # API Configuration
-    api_host: str = "0.0.0.0"
+    # Default loopback for local runs; Docker Compose sets API_HOST=0.0.0.0
+    api_host: str = "127.0.0.1"
     api_port: int = 8000
     api_workers: int = 4
     api_log_level: str = "info"
@@ -35,20 +38,20 @@ class Settings(BaseSettings):
     superadmin_password: str
 
     # Email
-    mail_server: Optional[str] = None
-    mail_port: Optional[int] = None
-    mail_username: Optional[str] = None
-    mail_password: Optional[str] = None
-    mail_from: Optional[str] = None
+    mail_server: str | None = None
+    mail_port: int | None = None
+    mail_username: str | None = None
+    mail_password: str | None = None
+    mail_from: str | None = None
     mail_reset_token_expiry_minutes: int = 30
 
     # Blockchain
-    rpc_url: Optional[str] = None
-    admin_address: Optional[str] = None
-    admin_private_key: Optional[str] = None
-    token_address: Optional[str] = None
-    registry_address: Optional[str] = None
-    optimizer_address: Optional[str] = None
+    rpc_url: str | None = None
+    admin_address: str | None = None
+    admin_private_key: str | None = None
+    token_address: str | None = None
+    registry_address: str | None = None
+    optimizer_address: str | None = None
 
     # ML Configuration
     ml_model_path: str = "./models/fraud_detector.pkl"
@@ -67,9 +70,9 @@ class Settings(BaseSettings):
 
     # Logging
     log_level: str = "INFO"
-    log_file: Optional[str] = None
-    audit_log_file: Optional[str] = None
-    security_log_file: Optional[str] = None
+    log_file: str | None = None
+    audit_log_file: str | None = None
+    security_log_file: str | None = None
 
     # Feature Flags
     enable_blockchain: bool = True
@@ -88,6 +91,10 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
+
+
+# FastAPI-recommended Annotated dependency (avoids B008 on Depends-as-default)
+SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
 def validate_required_settings(settings: Settings) -> None:

@@ -1,8 +1,8 @@
 """Tests for database models."""
 
-import pytest
 from datetime import datetime, timedelta
-from database.models import User, PasswordResetToken
+
+from database.models import PasswordResetToken, User
 
 
 class TestUserModel:

@@ -1,280 +1,18 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GTA-IT Fintech — Optimisation</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:      #F5F7FA;
-      --surface: #FFFFFF;
-      --surface2:#F9FAFB;
-      --border:  #E2E8F0;
-      --primary: #CC0000;
-      --primary2:#990000;
-      --accent:  #E53E3E;
-      --teal:    #CC0000;
-      --gold:    #D97706;
-      --red:     #CC0000;
-      --green:   #059669;
-      --blue:    #2563EB;
-      --purple:  #7C3AED;
-      --dark:    #1A202C;
-      --text:    #2D3748;
-      --gray:    #718096;
-      --gray2:   #CBD5E0;
-      --mono:    'Space Mono', monospace;
-      --sans:    'Syne', sans-serif;
-      --sidebar: 240px;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:var(--bg); font-family:var(--sans); color:var(--dark); min-height:100vh; display:flex; }
-
-    .sidebar {
-      width: var(--sidebar);
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-    }
-    .sidebar-logo { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
-    .logo-mark { display: inline-flex; align-items: center; gap: 0; margin-bottom: 0.25rem; }
-    .logo-gta {
-      background: var(--primary); color: #fff;
-      font-family: var(--sans); font-size: 1.15rem; font-weight: 800;
-      padding: 0.2rem 0.5rem; border-radius: 4px 0 0 4px;
-      letter-spacing: -0.01em; line-height: 1.3;
-    }
-    .logo-sep {
-      background: var(--dark); color: #fff;
-      font-family: var(--sans); font-size: 1.15rem; font-weight: 800;
-      padding: 0.2rem 0.2rem; line-height: 1.3;
-    }
-    .logo-it {
-      background: var(--dark); color: #fff;
-      font-family: var(--sans); font-size: 1.15rem; font-weight: 800;
-      padding: 0.2rem 0.5rem; border-radius: 0 4px 4px 0;
-      letter-spacing: -0.01em; line-height: 1.3;
-    }
-    .logo-sub {
-      font-family: var(--mono); font-size: 0.58rem; color: var(--gray);
-      letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.3rem;
-    }
-
-    .nav { flex: 1; padding: 1rem 0; }
-    .nav-label {
-      font-family: var(--mono); font-size: 0.62rem; color: var(--gray2);
-      letter-spacing: 0.15em; text-transform: uppercase;
-      padding: 0.5rem 1.5rem; margin-top: 0.5rem;
-    }
-    .nav-item {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.7rem 1.5rem; color: var(--gray);
-      text-decoration: none; font-size: 0.9rem; font-weight: 600;
-      transition: all 0.15s; cursor: pointer; border-left: 3px solid transparent;
-    }
-    .nav-item:hover { color: var(--dark); background: rgba(0,0,0,0.03); }
-    .nav-item.active { color: var(--primary); border-left-color: var(--primary); background: rgba(204,0,0,0.05); }
-    .nav-item .icon { font-size: 1.1rem; width: 22px; text-align: center; }
-
-    .sidebar-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); }
-    .wallet-badge {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0.75rem;
-    }
-    .wallet-badge .label {
-      font-family: var(--mono); font-size: 0.62rem;
-      color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase;
-    }
-    .wallet-badge .addr { font-family: var(--mono); font-size: 0.72rem; color: var(--primary); margin-top: 0.2rem; }
-    .logout-btn {
-      width: 100%; margin-top: 0.75rem; padding: 0.55rem;
-      background: transparent; border: 1px solid var(--border);
-      border-radius: 8px; color: var(--gray);
-      font-family: var(--sans); font-size: 0.8rem; cursor: pointer; transition: all 0.15s;
-    }
-    .logout-btn:hover { border-color: var(--primary); color: var(--primary); }
-
-    .main { margin-left: var(--sidebar); flex: 1; display: flex; flex-direction: column; }
-    .topbar {
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem; display: flex; align-items: center;
-      justify-content: space-between; position: sticky; top: 0; z-index: 50;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    }
-    .topbar-title { font-size: 1.1rem; font-weight: 800; color: var(--dark); }
-    .topbar-title span { color: var(--primary); }
-    .network-badge {
-      display: flex; align-items: center; gap: 0.4rem;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 20px; padding: 0.3rem 0.9rem;
-      font-family: var(--mono); font-size: 0.7rem; color: var(--green);
-    }
-    .network-badge .dot {
-      width: 6px; height: 6px; background: var(--green);
-      border-radius: 50%; animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-    .content { padding: 2rem; flex: 1; }
-
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 1rem; margin-bottom: 1.5rem;
-    }
-    .stat-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 1.25rem;
-      position: relative; overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-    }
-    .stat-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    }
-    .stat-card.gold::before  { background: linear-gradient(90deg, var(--gold), #F97316); }
-    .stat-card.teal::before  { background: linear-gradient(90deg, var(--primary), var(--accent)); }
-    .stat-card.green::before { background: linear-gradient(90deg, var(--green), var(--blue)); }
-    .stat-label {
-      font-family: var(--mono); font-size: 0.65rem; color: var(--gray);
-      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem;
-    }
-    .stat-value {
-      font-family: var(--mono); font-size: 1.8rem; font-weight: 700;
-      color: var(--dark); line-height: 1; margin-bottom: 0.4rem;
-    }
-    .stat-sub { font-family: var(--mono); font-size: 0.68rem; color: var(--gray); }
-    .stat-icon { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; opacity: 0.12; }
-
-    .panel {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-    }
-    .panel-header {
-      padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--surface2);
-    }
-    .panel-title { font-size: 0.9rem; font-weight: 700; color: var(--dark); }
-    .panel-sub { font-family: var(--mono); font-size: 0.65rem; color: var(--gray); }
-    .panel-body { padding: 1.5rem; }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-
-    .gas-meter { text-align: center; padding: 1.5rem 0; }
-    .gas-val {
-      font-family: var(--mono); font-size: 3.5rem; font-weight: 700;
-      color: var(--gold); line-height: 1;
-    }
-    .gas-unit { font-family: var(--mono); font-size: 0.8rem; color: var(--gray); margin-top: 0.3rem; }
-    .gas-bar-bg {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; height: 10px; margin-top: 1.5rem; overflow: hidden;
-    }
-    .gas-bar-fill {
-      height: 100%; border-radius: 8px;
-      background: linear-gradient(90deg, var(--green), var(--gold));
-      transition: width 0.8s ease;
-    }
-    .gas-legend {
-      display: flex; justify-content: space-between;
-      font-family: var(--mono); font-size: 0.62rem; color: var(--gray);
-      margin-top: 0.5rem;
-    }
-
-    .load-display {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 1.5rem; gap: 0.5rem;
-    }
-    .load-val {
-      font-family: var(--mono); font-size: 3.5rem; font-weight: 700;
-      color: var(--blue); line-height: 1;
-    }
-    .load-label { font-family: var(--mono); font-size: 0.65rem; color: var(--gray); text-transform: uppercase; }
-
-    .tip-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .tip-item {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0.9rem 1.1rem;
-      display: flex; gap: 0.85rem; align-items: flex-start;
-      transition: border-color 0.15s;
-    }
-    .tip-item:hover { border-color: var(--primary); }
-    .tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
-    .tip-title { font-size: 0.82rem; font-weight: 700; color: var(--dark); margin-bottom: 0.2rem; }
-    .tip-desc { font-family: var(--mono); font-size: 0.68rem; color: var(--gray); }
-
-    .info-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0.75rem 0; border-bottom: 1px solid rgba(226,232,240,0.6);
-    }
-    .info-row:last-child { border-bottom: none; }
-    .info-key { font-family: var(--mono); font-size: 0.72rem; color: var(--gray); }
-    .info-val { font-family: var(--mono); font-size: 0.78rem; color: var(--dark); font-weight: 700; }
-    .info-val.teal  { color: var(--primary); }
-    .info-val.gold  { color: var(--gold); }
-    .info-val.green { color: var(--green); }
-
-    .btn-refresh {
-      padding: 0.5rem 1rem;
-      background: transparent; border: 1px solid var(--border);
-      border-radius: 8px; color: var(--primary);
-      font-family: var(--mono); font-size: 0.72rem;
-      cursor: pointer; transition: all 0.15s;
-    }
-    .btn-refresh:hover { border-color: var(--primary); background: rgba(204,0,0,0.05); }
-
-    .loading {
-      display: flex; align-items: center; justify-content: center;
-      padding: 2rem; color: var(--gray); font-family: var(--mono);
-      font-size: 0.8rem; gap: 0.5rem;
-    }
-    .loading::before {
-      content: ''; width: 14px; height: 14px;
-      border: 2px solid var(--border); border-top-color: var(--primary);
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+  {% include '_head.html' %}
 </head>
 <body>
 
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-mark">
-      <span class="logo-gta">GTA</span><span class="logo-sep">-</span><span class="logo-it">IT</span>
-    </div>
-    <div class="logo-sub">Fintech Platform</div>
-  </div>
-  <nav class="nav">
-    <div class="nav-label">Principal</div>
-    <a class="nav-item" href="/dashboard"><span class="icon">◈</span> Dashboard</a>
-    <a class="nav-item" href="/transactions"><span class="icon">⇄</span> Transactions</a>
-    <a class="nav-item" href="/fraudes"><span class="icon">⚠</span> Alertes Fraude</a>
-    <div class="nav-label">Blockchain</div>
-    <a class="nav-item" href="/token"><span class="icon">◎</span> Token FTK</a>
-    <a class="nav-item active" href="/optimisation"><span class="icon">⚡</span> Optimisation</a>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="wallet-badge">
-      <div class="label">Wallet connecté</div>
-      <div class="addr" id="sidebarWallet">Chargement...</div>
-    </div>
-    <button class="logout-btn" onclick="logout()">⎋ Déconnexion</button>
-  </div>
-</aside>
+{% set active = 'optimisation' %}
+{% include '_sidebar.html' %}
 
 <div class="main">
-  <header class="topbar">
-    <div class="topbar-title"><span>Optimisation</span> Gas & Réseau</div>
-    <div class="network-badge">
-      <div class="dot"></div>
-      Ganache Local · Chain 1337
-    </div>
-  </header>
+
+  {% set topbar_title = '<span>Optimisation</span> Gas &amp; Réseau' %}
+  {% include '_topbar.html' %}
 
   <div class="content">
 
@@ -339,11 +77,11 @@
       </div>
     </div>
 
-    <div class="panel" style="margin-bottom:1.5rem">
+    <div class="panel">
       <div class="panel-header">
         <div>
           <div class="panel-title">Paramètres d'Optimisation</div>
-          <div class="panel-sub">Algorithme IA + Blockchain</div>
+          <div class="panel-sub">Heuristique + registre on-chain</div>
         </div>
       </div>
       <div class="panel-body">
@@ -364,10 +102,6 @@
           <div class="info-val">300 000</div>
         </div>
         <div class="info-row">
-          <div class="info-key">Algorithme de routage</div>
-          <div class="info-val green">IA RandomForest v1</div>
-        </div>
-        <div class="info-row">
           <div class="info-key">Dernière mise à jour</div>
           <div class="info-val" id="lastUpdated">—</div>
         </div>
@@ -378,7 +112,7 @@
       <div class="panel-header">
         <div>
           <div class="panel-title">Conseils d'Optimisation</div>
-          <div class="panel-sub">Recommandations IA</div>
+          <div class="panel-sub">Recommandations</div>
         </div>
       </div>
       <div class="panel-body">
@@ -418,14 +152,11 @@
   </div>
 </div>
 
+<script src="/static/app.js"></script>
 <script>
   const token  = localStorage.getItem('token');
-  const wallet = localStorage.getItem('wallet');
   if (!token) window.location.href = '/';
-  if (wallet) {
-    document.getElementById('sidebarWallet').textContent =
-      wallet.slice(0,6) + '...' + wallet.slice(-4);
-  }
+  initShell();
 
   const headers = {
     'Content-Type' : 'application/json',
@@ -441,7 +172,7 @@
       const gas  = d.recommended_gas_price || 0;
       const load = d.network_load || '0%';
 
-      document.getElementById('gasPrice').textContent    = gas + ' Gwei';
+      document.getElementById('gasPrice').textContent    = gas;
       document.getElementById('networkLoad').textContent = load;
 
       const hour = new Date().getHours();
@@ -464,12 +195,6 @@
     } catch(e) {
       console.error(e);
     }
-  }
-
-  function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('wallet');
-    window.location.href = '/';
   }
 
   loadOptimization();

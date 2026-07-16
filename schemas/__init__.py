@@ -1,9 +1,8 @@
 """Request/Response schemas for API."""
 
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
 from datetime import datetime
 
+from pydantic import BaseModel, EmailStr, Field
 
 # ════════════════════════════════════════════════════════════════
 # Authentication Schemas
@@ -15,7 +14,7 @@ class RegisterRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=8)
-    wallet_address: str = Field(..., regex=r"^0x[a-fA-F0-9]{40}$")
+    wallet_address: str = Field(..., pattern=r"^0x[a-fA-F0-9]{40}$")
 
 
 class LoginRequest(BaseModel):
@@ -39,13 +38,14 @@ class ResetPasswordRequest(BaseModel):
 
 
 class AuthResponse(BaseModel):
-    """Authentication response with JWT token."""
+    """Réponse d'authentification JWT (compat UI)."""
 
     access_token: str
     token_type: str = "bearer"
     user_id: int
     email: str
     role: str
+    wallet: str
 
 
 # ════════════════════════════════════════════════════════════════
@@ -54,11 +54,11 @@ class AuthResponse(BaseModel):
 
 
 class TransactionRequest(BaseModel):
-    """Transaction submission request."""
+    """Soumission de transaction."""
 
-    receiver: str = Field(..., regex=r"^0x[a-fA-F0-9]{40}$")
+    receiver: str = Field(..., pattern=r"^0x[a-fA-F0-9]{40}$")
     amount: float = Field(..., gt=0)
-    features: Optional[dict] = None  # Optional: all 31 features for fraud detection
+    features: dict | None = None  # optionnel : 11 features FTK
 
 
 class TransactionResponse(BaseModel):
@@ -81,17 +81,16 @@ class TransactionResponse(BaseModel):
 
 
 class FraudCheckRequest(BaseModel):
-    """Fraud prediction request."""
+    """Requête de prédiction fraude."""
 
     amount: float
-    time: Optional[int] = None
-    hour_of_day: Optional[int] = None
-    # Optional: include V1-V28 features
-    features: Optional[dict] = None
+    hour: int | None = None
+    hour_of_day: int | None = None
+    features: dict | None = None
 
 
 class FraudCheckResponse(BaseModel):
-    """Fraud prediction response."""
+    """Réponse prédiction fraude."""
 
     fraud_probability: float
     risk_score: int
@@ -100,36 +99,30 @@ class FraudCheckResponse(BaseModel):
     features_used: int
 
 
-# ════════════════════════════════════════════════════════════════
-# Error Schemas
-# ════════════════════════════════════════════════════════════════
-
-
 class ErrorResponse(BaseModel):
-    """Standard error response."""
+    """Erreur API standard."""
 
     error: str
-    detail: Optional[str] = None
-    code: Optional[str] = None
-
-
-# ════════════════════════════════════════════════════════════════
-# Status Schemas
-# ════════════════════════════════════════════════════════════════
+    detail: str | None = None
+    code: str | None = None
 
 
 class StatusResponse(BaseModel):
-    """Application status response."""
+    """Statut applicatif (compat badge UI + détail)."""
 
     app_version: str
     environment: str
-    database: dict
-    blockchain: dict
-    ml_models: dict
+    blockchain_connected: bool = False
+    chain_id: int | None = None
+    ia_model_loaded: bool = False
+    total_transactions: int = 0
+    database: dict = {}
+    blockchain: dict = {}
+    ml_models: dict = {}
 
 
 class HealthResponse(BaseModel):
-    """Health check response."""
+    """Santé du service."""
 
     status: str
     timestamp: datetime

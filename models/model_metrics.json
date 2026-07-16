@@ -1,0 +1,29 @@
+{
+  "modele": "XGBoost_v2",
+  "entraine_le": "16/07/2026 00:41",
+  "n_train": 38750,
+  "n_test": 12917,
+  "part_fraude_pct": 2.07,
+  "exactitude": 0.9974,
+  "precision": 0.9179,
+  "sensibilite": 0.9625,
+  "specificite": 0.9982,
+  "f1_score": 0.9397,
+  "roc_auc": 0.9997,
+  "pr_auc": 0.9888,
+  "matrice": {
+    "tn": 12627,
+    "fp": 23,
+    "fn": 10,
+    "tp": 257
+  },
+  "hyperparametres": {
+    "n_estimators": 400,
+    "max_depth": 6,
+    "learning_rate": 0.08,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
+    "scale_pos_weight": 47.3,
+    "optimisation": "Gradient boosting — descente de gradient sur la log-loss"
+  }
+}

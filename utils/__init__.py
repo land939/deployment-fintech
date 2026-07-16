@@ -1,11 +1,9 @@
 """Utility functions for authentication, validation, and helpers."""
 
 import hashlib
-import secrets
 import re
+import secrets
 from datetime import datetime, timedelta
-from typing import Tuple
-
 
 # ════════════════════════════════════════════════════════════════
 # Validation Helpers
@@ -31,9 +29,7 @@ def is_strong_password(password: str) -> bool:
         return False
     if not re.search(r"[a-zA-Z]", password):
         return False
-    if not re.search(r"[0-9]", password):
-        return False
-    return True
+    return bool(re.search(r"[0-9]", password))
 
 
 # ════════════════════════════════════════════════════════════════
@@ -41,7 +37,7 @@ def is_strong_password(password: str) -> bool:
 # ════════════════════════════════════════════════════════════════
 
 
-def generate_reset_token() -> Tuple[str, str]:
+def generate_reset_token() -> tuple[str, str]:
     """
     Generate a reset token and its hash.
 

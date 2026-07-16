@@ -1,1 +1,13 @@
-["Time", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21", "V22", "V23", "V24", "V25", "V26", "V27", "V28", "Amount", "Hour"]
+[
+  "amount",
+  "hour",
+  "day_of_week",
+  "account_age_days",
+  "tx_count_1h",
+  "tx_count_24h",
+  "amount_avg_ratio",
+  "seconds_since_last_tx",
+  "is_new_receiver",
+  "unique_receivers_24h",
+  "past_fraud_count"
+]

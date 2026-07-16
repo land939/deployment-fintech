@@ -1,342 +1,37 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GTA-IT Fintech — Créer un compte</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:       #F5F7FA;
-      --surface:  #FFFFFF;
-      --border:   #E2E8F0;
-      --primary:  #CC0000;
-      --primary2: #990000;
-      --accent:   #E53E3E;
-      --gold:     #D97706;
-      --green:    #059669;
-      --dark:     #1A202C;
-      --text:     #2D3748;
-      --gray:     #718096;
-      --gray2:    #CBD5E0;
-      --mono:     'Space Mono', monospace;
-      --sans:     'Syne', sans-serif;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-
-    body {
-      background: var(--bg);
-      font-family: var(--sans);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 0;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(204,0,0,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(204,0,0,0.025) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-    }
-
-    .blob {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.07;
-      pointer-events: none;
-    }
-    .blob-1 { width:500px; height:500px; background:var(--primary); top:-150px; left:-150px; }
-    .blob-2 { width:350px; height:350px; background:var(--primary); bottom:-80px; right:-80px; }
-
-    /* ── Wrapper ── */
-    .wrapper {
-      position: relative;
-      z-index: 10;
-      width: 100%;
-      max-width: 460px;
-      padding: 0 1.5rem;
-    }
-
-    
-    .logo {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .logo-mark {
-      display: inline-flex;
-      align-items: center;
-      margin-bottom: 0.85rem;
-    }
-    .logo-gta {
-      background: var(--primary);
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 2rem;
-      font-weight: 800;
-      padding: 0.3rem 0.7rem;
-      border-radius: 6px 0 0 6px;
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-    .logo-sep {
-      background: var(--dark);
-      color: #fff;
-      font-size: 2rem;
-      font-weight: 800;
-      padding: 0.3rem 0.2rem;
-      line-height: 1;
-    }
-    .logo-it {
-      background: var(--dark);
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 2rem;
-      font-weight: 800;
-      padding: 0.3rem 0.7rem;
-      border-radius: 0 6px 6px 0;
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-    .logo h1 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-top: 0.5rem;
-    }
-    .logo p {
-      font-family: var(--mono);
-      font-size: 0.65rem;
-      color: var(--gray);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-top: 0.25rem;
-    }
-
-    /* ── Card ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-    }
-    .card-bar {
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
-    }
-    .card-body { padding: 2.25rem 2.5rem; }
-
-    /* ── Header avec badge FTK ── */
-    .card-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 0.3rem;
-    }
-    .card-title {
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: var(--dark);
-    }
-    .ftk-badge {
-      background: linear-gradient(135deg, var(--gold), #F59E0B);
-      color: #fff;
-      font-family: var(--mono);
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 0.25rem 0.65rem;
-      border-radius: 20px;
-      letter-spacing: 0.05em;
-      white-space: nowrap;
-      margin-top: 0.3rem;
-    }
-    .card-sub {
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      color: var(--gray);
-      margin-bottom: 1.75rem;
-    }
-
-    
-    .form-group { margin-bottom: 1.1rem; }
-    label {
-      display: block;
-      font-family: var(--mono);
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 0.45rem;
-    }
-    label span { color: var(--gray); font-weight: 400; text-transform: none; }
-
-    input {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.8rem 1rem;
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      color: var(--dark);
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(204,0,0,0.08);
-    }
-    input::placeholder { color: var(--gray2); }
-
-    /* ── Ligne wallet + bouton MetaMask ── */
-    .wallet-row { display: flex; gap: 0.5rem; }
-    .wallet-row input { flex: 1; min-width: 0; }
-    .btn-metamask {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0 1rem;
-      background: var(--dark);
-      border: none;
-      border-radius: 8px;
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #fff;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s, transform 0.1s;
-      flex-shrink: 0;
-    }
-    .btn-metamask:hover { background: #2D3748; transform: translateY(-1px); }
-    .btn-metamask:active { transform: translateY(0); }
-
-    /* ── Indicateur force du mot de passe ── */
-    .strength-bar {
-      height: 3px;
-      border-radius: 2px;
-      margin-top: 0.4rem;
-      background: var(--border);
-      overflow: hidden;
-    }
-    .strength-fill {
-      height: 100%;
-      width: 0%;
-      border-radius: 2px;
-      transition: width 0.3s, background 0.3s;
-    }
-    .strength-label {
-      font-family: var(--mono);
-      font-size: 0.6rem;
-      color: var(--gray);
-      margin-top: 0.2rem;
-      height: 0.9rem;
-    }
-
-    /* ── Bouton principal ── */
-    .btn-submit {
-      width: 100%;
-      padding: 0.9rem;
-      background: var(--primary);
-      border: none;
-      border-radius: 8px;
-      font-family: var(--sans);
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #fff;
-      cursor: pointer;
-      margin-top: 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-      box-shadow: 0 4px 14px rgba(204,0,0,0.28);
-    }
-    .btn-submit:hover  { background: var(--primary2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(204,0,0,0.35); }
-    .btn-submit:active { transform: translateY(0); }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    /* ── Alertes ── */
-    .alert {
-      border-radius: 8px;
-      padding: 0.7rem 1rem;
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      margin-bottom: 1rem;
-      display: none;
-    }
-    .alert-error   { background: rgba(204,0,0,0.06);  border: 1px solid rgba(204,0,0,0.2);  color: var(--primary); }
-    .alert-success { background: rgba(5,150,105,0.06); border: 1px solid rgba(5,150,105,0.2); color: var(--green); }
-
-
-    /* ── Footer ── */
-    .footer-link {
-      text-align: center;
-      margin-top: 1.5rem;
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      color: var(--gray);
-    }
-    .footer-link a { color: var(--primary); text-decoration: none; font-weight: 700; }
-    .footer-link a:hover { text-decoration: underline; }
-
-    /* ── Spinner ── */
-    .spinner {
-      display: none;
-      width: 17px; height: 17px;
-      border: 2px solid rgba(255,255,255,0.35);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+  <title>GTA-IT Fintech — Inscription</title>
+  {% include '_head.html' %}
 </head>
-<body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
+<body class="auth">
+  <button class="theme-toggle fab" onclick="toggleTheme()" title="Changer de thème" aria-label="Changer de thème"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg></button>
 
+  {% include '_authhero.html' %}
+  <div class="auth-main">
   <div class="wrapper">
 
-    <!-- Logo -->
     <div class="logo">
       <div class="logo-mark">
-        <span class="logo-gta">GTA</span>
-        <span class="logo-sep">-</span>
-        <span class="logo-it">IT</span>
+        <span class="logo-gta">GTA</span><span class="logo-sep">-</span><span class="logo-it">IT</span>
       </div>
       <h1>Plateforme Fintech Sécurisée</h1>
       <p>IA · Blockchain · Détection de Fraude</p>
     </div>
 
-    <!-- Card -->
     <div class="card">
       <div class="card-bar"></div>
       <div class="card-body">
 
-        <!-- Titre -->
         <div class="card-header">
           <div class="card-title">Créer un compte</div>
           <div class="ftk-badge">+ 1 000 FTK offerts</div>
         </div>
         <div class="card-sub">Inscrivez-vous et rejoignez la plateforme</div>
 
-
-        <!-- Alertes -->
         <div class="alert alert-error"   id="alertError"></div>
         <div class="alert alert-success" id="alertSuccess"></div>
 
-        <!-- Formulaire -->
         <form id="registerForm" novalidate>
 
           <div class="form-group">
@@ -375,6 +70,7 @@
       </div>
     </div>
   </div>
+  </div><!-- /auth-main -->
 
   <script>
     /* ── Indicateur de force du mot de passe ── */
@@ -383,17 +79,17 @@
       const fill  = document.getElementById('strengthFill');
       const label = document.getElementById('strengthLabel');
       let score = 0;
-      if (v.length >= 8)                          score++;
-      if (/[A-Z]/.test(v))                         score++;
-      if (/[0-9]/.test(v))                         score++;
-      if (/[^A-Za-z0-9]/.test(v))                  score++;
+      if (v.length >= 8)          score++;
+      if (/[A-Z]/.test(v))        score++;
+      if (/[0-9]/.test(v))        score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
 
       const levels = [
-        { pct: '0%',   color: '',          text: '' },
-        { pct: '25%',  color: '#E53E3E',   text: 'Faible' },
-        { pct: '50%',  color: '#D97706',   text: 'Moyen' },
-        { pct: '75%',  color: '#2B6CB0',   text: 'Fort' },
-        { pct: '100%', color: '#059669',   text: 'Très fort' },
+        { pct: '0%',   color: '',        text: '' },
+        { pct: '25%',  color: '#E5484D', text: 'Faible' },
+        { pct: '50%',  color: '#FAB219', text: 'Moyen' },
+        { pct: '75%',  color: '#3987E5', text: 'Fort' },
+        { pct: '100%', color: '#30B96E', text: 'Très fort' },
       ];
       const lv = v.length === 0 ? levels[0] : levels[score] || levels[1];
       fill.style.width      = lv.pct;

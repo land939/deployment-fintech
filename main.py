@@ -1,92 +1,90 @@
-"""GTA Fintech - Main FastAPI Application."""
+"""Application principale FastAPI — GTA Fintech."""
 
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from pathlib import Path
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import func, select
 
-from config import Settings, get_settings, validate_required_settings, setup_logging
-from database import init_db
-from services.ml import FraudDetectionService
+from config import Settings, get_settings, setup_logging, validate_required_settings
+from database import init_db, set_session_factory
+from database.models import Transaction
+from routers import auth, fraud, pages, superadmin, transactions
+from schemas import HealthResponse, StatusResponse
 from services.blockchain import BlockchainService
-from schemas import HealthResponse, StatusResponse, ErrorResponse
+from services.ml import FraudDetectionService
 
 logger = logging.getLogger(__name__)
 
-# Global instances
-settings: Settings = None
+ROOT = Path(__file__).resolve().parent
+
+settings: Settings | None = None
 async_session_factory = None
-fraud_service: FraudDetectionService = None
-blockchain_service: BlockchainService = None
+fraud_service: FraudDetectionService | None = None
+blockchain_service: BlockchainService | None = None
+engine = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI lifespan context manager for startup/shutdown."""
-    global settings, async_session_factory, fraud_service, blockchain_service
+    """Démarrage / arrêt de l'application."""
+    global settings, async_session_factory, fraud_service, blockchain_service, engine
 
-    # Startup
     logger.info("=" * 60)
-    logger.info("🚀 GTA Fintech Platform Starting...")
+    logger.info("Démarrage plateforme GTA Fintech...")
     logger.info("=" * 60)
 
     try:
-        # Load settings
         settings = get_settings()
         validate_required_settings(settings)
-
-        # Setup logging
         setup_logging(settings)
 
-        # Initialize database
-        logger.info("📦 Initializing database...")
+        logger.info("Initialisation base de données...")
         engine, async_session_factory = await init_db(settings.database_url)
-        logger.info("✅ Database initialized")
+        set_session_factory(async_session_factory)
+        logger.info("Base de données prête")
 
-        # Initialize ML service
-        logger.info("🤖 Loading ML models...")
-        fraud_service = FraudDetectionService(settings)
-        model_info = fraud_service.get_model_info()
-        logger.info(f"✅ ML Service ready: {model_info}")
+        logger.info("Chargement modèles ML...")
+        try:
+            fraud_service = FraudDetectionService(settings)
+            logger.info("Service ML prêt: %s", fraud_service.get_model_info())
+        except Exception as e:
+            fraud_service = None
+            logger.warning("Modèles ML indisponibles: %s", e)
 
-        # Initialize Blockchain service
-        logger.info("🔗 Connecting to blockchain...")
+        logger.info("Connexion blockchain...")
         blockchain_service = BlockchainService(settings)
         if blockchain_service.connected:
-            logger.info("✅ Blockchain connected")
+            logger.info("Blockchain connectée")
         else:
-            logger.warning("⚠️  Blockchain not available")
+            logger.warning("Blockchain indisponible")
 
-        logger.info("✅ GTA Fintech Platform Ready!")
+        logger.info("Plateforme GTA Fintech prête")
         logger.info("=" * 60)
-
         yield
 
     except Exception as e:
-        logger.error(f"❌ Startup failed: {e}")
+        logger.error("Échec démarrage: %s", e)
         raise
     finally:
-        # Shutdown
-        logger.info("🛑 GTA Fintech Platform Shutting Down...")
+        logger.info("Arrêt plateforme GTA Fintech...")
         if engine:
             await engine.dispose()
-        logger.info("✅ Cleanup complete")
+        logger.info("Nettoyage terminé")
 
 
-# Create FastAPI app
 app = FastAPI(
-    title="GTA Fintech API",
-    description="Blockchain + AI Fraud Detection Platform",
+    title="GTA Fintech",
+    description="Blockchain + détection de fraude IA",
     version="2.0.0",
     lifespan=lifespan,
 )
 
-# CORS Middleware
-if settings is None:
-    _settings = get_settings()
-else:
-    _settings = settings
+_settings = get_settings() if settings is None else settings
 
 app.add_middleware(
     CORSMiddleware,
@@ -96,70 +94,81 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Assets UI (option A : StaticFiles + Jinja2 dans le même serveur)
+static_dir = ROOT / "static"
+if static_dir.is_dir():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
-# ════════════════════════════════════════════════════════════════
-# Health & Status Endpoints
-# ════════════════════════════════════════════════════════════════
+app.include_router(pages.router)
+app.include_router(auth.router)
+app.include_router(fraud.router)
+app.include_router(transactions.router)
+app.include_router(superadmin.router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
-    """Health check endpoint."""
     from datetime import datetime
 
-    return {
-        "status": "operational",
-        "timestamp": datetime.utcnow(),
-    }
+    return {"status": "operational", "timestamp": datetime.utcnow()}
 
 
 @app.get("/status", response_model=StatusResponse, tags=["Status"])
 async def get_status():
-    """Get application status."""
+    """Statut pour le badge UI + détail technique."""
+    chain_info = blockchain_service.get_network_info() if blockchain_service else {}
+    connected = bool(blockchain_service and getattr(blockchain_service, "connected", False))
+    chain_id = chain_info.get("chain_id") if isinstance(chain_info, dict) else None
+
+    total_tx = 0
+    if async_session_factory is not None:
+        try:
+            async with async_session_factory() as session:
+                total_tx = (
+                    await session.execute(select(func.count()).select_from(Transaction))
+                ).scalar_one()
+        except Exception:
+            total_tx = 0
+
     return {
         "app_version": "2.0.0",
-        "environment": settings.environment,
-        "database": {"connected": True},  # Add real DB check
-        "blockchain": blockchain_service.get_network_info() if blockchain_service else {},
+        "environment": settings.environment if settings else "unknown",
+        "blockchain_connected": connected,
+        "chain_id": chain_id,
+        "ia_model_loaded": fraud_service is not None,
+        "total_transactions": total_tx,
+        "database": {"connected": async_session_factory is not None},
+        "blockchain": chain_info,
         "ml_models": fraud_service.get_model_info() if fraud_service else {},
     }
 
 
-# ════════════════════════════════════════════════════════════════
-# Error Handlers
-# ════════════════════════════════════════════════════════════════
-
-
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc):
-    """Handle general exceptions."""
-    logger.error(f"❌ Unhandled exception: {exc}")
+    logger.error("Exception non gérée: %s", exc)
     return JSONResponse(
         status_code=500,
         content={
-            "error": "Internal server error",
-            "detail": str(exc) if settings.debug else "An error occurred",
+            "error": "Erreur interne",
+            "detail": str(exc) if settings and settings.debug else "Une erreur est survenue",
         },
     )
 
 
 @app.exception_handler(ValueError)
 async def value_error_handler(request, exc):
-    """Handle value errors."""
-    logger.warning(f"⚠️  Value error: {exc}")
+    logger.warning("Erreur de valeur: %s", exc)
     return JSONResponse(
         status_code=400,
-        content={"error": "Invalid request", "detail": str(exc)},
+        content={"error": "Requête invalide", "detail": str(exc)},
     )
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # Load settings before running
     _settings = get_settings()
     setup_logging(_settings)
-
     uvicorn.run(
         "main:app",
         host=_settings.api_host,

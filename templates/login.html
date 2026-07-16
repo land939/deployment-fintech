@@ -1,277 +1,14 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GTA-IT Fintech — Connexion</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:       #F5F7FA;
-      --surface:  #FFFFFF;
-      --border:   #E2E8F0;
-      --primary:  #CC0000;
-      --primary2: #990000;
-      --accent:   #E53E3E;
-      --gold:     #D97706;
-      --red:      #CC0000;
-      --green:    #059669;
-      --dark:     #1A202C;
-      --text:     #2D3748;
-      --gray:     #718096;
-      --gray2:    #CBD5E0;
-      --mono:     'Space Mono', monospace;
-      --sans:     'Syne', sans-serif;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-
-    body {
-      background: var(--bg);
-      font-family: var(--sans);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(204,0,0,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(204,0,0,0.025) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-    }
-
-    .blob {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.07;
-      pointer-events: none;
-    }
-    .blob-1 { width:500px; height:500px; background:var(--primary); top:-150px; left:-150px; }
-    .blob-2 { width:350px; height:350px; background:var(--primary); bottom:-80px; right:-80px; }
-
-    .login-wrapper {
-      position: relative;
-      z-index: 10;
-      width: 100%;
-      max-width: 440px;
-      padding: 0 1.5rem;
-    }
-
-    /* GTA-IT Logo */
-    .logo {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
-    .logo-mark {
-      display: inline-flex;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 1rem;
-    }
-    .logo-gta {
-      background: var(--primary);
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 2rem;
-      font-weight: 800;
-      padding: 0.3rem 0.7rem;
-      border-radius: 6px 0 0 6px;
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-    .logo-sep {
-      background: var(--dark);
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 2rem;
-      font-weight: 800;
-      padding: 0.3rem 0.25rem;
-      line-height: 1;
-    }
-    .logo-it {
-      background: var(--dark);
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 2rem;
-      font-weight: 800;
-      padding: 0.3rem 0.7rem;
-      border-radius: 0 6px 6px 0;
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-    .logo h1 {
-      font-family: var(--sans);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-top: 0.75rem;
-    }
-    .logo p {
-      font-family: var(--mono);
-      font-size: 0.68rem;
-      color: var(--gray);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-top: 0.3rem;
-    }
-
-    /* Card */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    }
-    .card-top-bar {
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
-    }
-    .card-inner { padding: 2.5rem; }
-
-    .card-title {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--dark);
-      margin-bottom: 0.3rem;
-    }
-    .card-sub {
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      color: var(--gray);
-      margin-bottom: 2rem;
-    }
-
-    .form-group { margin-bottom: 1.25rem; }
-    label {
-      display: block;
-      font-family: var(--mono);
-      font-size: 0.68rem;
-      color: var(--text);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    input {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.8rem 1rem;
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      color: var(--dark);
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(204,0,0,0.1);
-    }
-    input::placeholder { color: var(--gray2); }
-
-    .btn {
-      width: 100%;
-      padding: 0.9rem;
-      background: var(--primary);
-      border: none;
-      border-radius: 8px;
-      font-family: var(--sans);
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #fff;
-      cursor: pointer;
-      margin-top: 0.5rem;
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-      box-shadow: 0 4px 14px rgba(204,0,0,0.3);
-    }
-    .btn:hover { background: var(--primary2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(204,0,0,0.35); }
-    .btn:active { transform: translateY(0); }
-
-    .divider {
-      text-align: center;
-      margin: 1.25rem 0;
-      position: relative;
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      color: var(--gray);
-    }
-    .divider::before, .divider::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      width: 40%;
-      height: 1px;
-      background: var(--border);
-    }
-    .divider::before { left: 0; }
-    .divider::after  { right: 0; }
-
-    .btn-outline {
-      width: 100%;
-      padding: 0.9rem;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-family: var(--sans);
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-    }
-    .btn-outline:hover { border-color: var(--primary); background: rgba(204,0,0,0.04); color: var(--primary); }
-
-    .error-msg {
-      background: rgba(204,0,0,0.06);
-      border: 1px solid rgba(204,0,0,0.2);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      color: var(--primary);
-      margin-bottom: 1rem;
-      display: none;
-    }
-
-    .footer-link {
-      text-align: center;
-      margin-top: 1.5rem;
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      color: var(--gray);
-    }
-    .footer-link a { color: var(--primary); text-decoration: none; font-weight: 700; }
-    .footer-link a:hover { text-decoration: underline; }
-
-    .spinner {
-      display: none;
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      margin: 0 auto;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+  <title>GTA-IT Fintech Connexion</title>
+  {% include '_head.html' %}
 </head>
-<body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
+<body class="auth">
+  <button class="theme-toggle fab" onclick="toggleTheme()" title="Changer de thème" aria-label="Changer de thème"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg></button>
 
+  {% include '_authhero.html' %}
+  <div class="auth-main">
   <div class="login-wrapper">
     <div class="logo">
       <div class="logo-mark">
@@ -297,8 +34,8 @@
           <div class="form-group">
             <label>Mot de passe</label>
             <input type="password" id="password" placeholder="••••••••" required />
-            <div style="text-align:right; margin-top:0.4rem;">
-              <a href="/forgot-password" style="font-family: var(--mono); font-size:0.7rem; color: var(--gray); text-decoration:none;">
+            <div style="text-align:right; margin-top:0.45rem;">
+              <a href="/forgot-password" style="font-family:var(--mono); font-size:0.68rem; color:var(--gray); text-decoration:none;">
                 Mot de passe oublié ?
               </a>
             </div>
@@ -321,6 +58,7 @@
       </div>
     </div>
   </div>
+  </div><!-- /auth-main -->
 
   <script>
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -374,10 +112,29 @@
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const wallet   = accounts[0];
 
-        const res = await fetch('/auth/login-metamask', {
+        // 1. Demander un message unique (nonce) au serveur
+        const nonceRes  = await fetch('/auth/metamask-nonce', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ wallet_address: wallet })
+        });
+        const nonceData = await nonceRes.json();
+        if (!nonceRes.ok) {
+          alert(nonceData.error || 'Erreur lors de la demande de nonce');
+          return;
+        }
+
+        // 2. Signer le message avec MetaMask (preuve de possession du wallet)
+        const signature = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [nonceData.message, wallet]
+        });
+
+        // 3. Envoyer wallet + signature pour obtenir le JWT
+        const res = await fetch('/auth/login-metamask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wallet_address: wallet, signature })
         });
 
         const data = await res.json();

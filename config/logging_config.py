@@ -3,6 +3,7 @@
 import logging
 import logging.handlers
 from pathlib import Path
+
 from config.settings import Settings
 
 
@@ -31,9 +32,7 @@ def setup_logging(settings: Settings) -> None:
             settings.log_file, maxBytes=10 * 1024 * 1024, backupCount=5
         )
         file_handler.setLevel(getattr(logging, settings.log_level))
-        file_formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        )
+        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
 
@@ -44,9 +43,7 @@ def setup_logging(settings: Settings) -> None:
             settings.audit_log_file, maxBytes=10 * 1024 * 1024, backupCount=5
         )
         audit_handler.setLevel(logging.INFO)
-        audit_formatter = logging.Formatter(
-            "%(asctime)s | %(name)s | %(message)s"
-        )
+        audit_formatter = logging.Formatter("%(asctime)s | %(name)s | %(message)s")
         audit_handler.setFormatter(audit_formatter)
         audit_logger.addHandler(audit_handler)
         audit_logger.setLevel(logging.INFO)

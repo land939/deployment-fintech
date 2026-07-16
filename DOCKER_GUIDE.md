@@ -444,7 +444,7 @@ docker-compose -f docker/docker-compose.yml up -d
    ```bash
    # Generate new SECRET_KEY
    python -c "import secrets; print(secrets.token_urlsafe(32))"
-   
+
    # Update .env with strong passwords
    SECRET_KEY=<generated-token>
    DB_PASSWORD=<strong-random-password>
@@ -549,5 +549,5 @@ docker-compose -f docker/docker-compose.yml up -d api
 
 ---
 
-**Last Updated:** July 2026  
+**Last Updated:** July 2026
 **Docker Folder:** `/mnt/hackwrld/Projects/GTA/code_memoire/docker/`

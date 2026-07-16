@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title TransactionOptimizer
- * @notice Contrat d'optimisation : reçoit les recommandations IA et 
+ * @notice Contrat d'optimisation : reçoit les recommandations IA et
  *         enregistre les transactions optimisées on-chain
  */
 contract TransactionOptimizer {

@@ -24,8 +24,15 @@ FROM base AS builder
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy requirements
+# Copy requirements + packages (needed for editable install / setuptools discovery)
 COPY pyproject.toml ./
+COPY config ./config
+COPY database ./database
+COPY services ./services
+COPY routers ./routers
+COPY schemas ./schemas
+COPY utils ./utils
+COPY main.py .
 
 # Install dependencies
 RUN pip install --upgrade pip setuptools wheel && \

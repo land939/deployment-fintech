@@ -9,6 +9,7 @@ Utilisation :
 """
 
 import sys
+
 from app import app, db
 
 
@@ -21,7 +22,9 @@ def reset_database():
 
 if __name__ == "__main__":
     if "--force" not in sys.argv:
-        reponse = input(" Cette action supprime TOUS les utilisateurs, transactions et logs. Continuer ? (oui/non) : ")
+        reponse = input(
+            " Cette action supprime TOUS les utilisateurs, transactions et logs. Continuer ? (oui/non) : "
+        )
         if reponse.strip().lower() not in ("oui", "o", "yes", "y"):
             print("Annulé.")
             sys.exit(0)

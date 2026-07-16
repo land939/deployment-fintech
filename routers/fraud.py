@@ -1,15 +1,17 @@
-"""Fraud detection routes."""
+"""Routes détection de fraude."""
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
+
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from config import Settings, get_settings
-from database import get_session
-from database.models import FraudAlert, Transaction
-from services.ml import FraudDetectionService
+from config import SettingsDep
+from database import DbSession
+from database.models import FraudAlert
 from schemas import FraudCheckRequest, FraudCheckResponse
+from services.ml import FraudDetectionService
+from services.ml.features import FEATURE_COLS
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/fraud", tags=["Fraud Detection"])
@@ -18,68 +20,65 @@ router = APIRouter(prefix="/fraud", tags=["Fraud Detection"])
 @router.post("/check", response_model=FraudCheckResponse)
 async def check_fraud(
     request: FraudCheckRequest,
-    settings: Settings = Depends(get_settings),
+    settings: SettingsDep,
 ):
-    """Check transaction for fraud using ML model."""
+    """Vérifie une transaction via le modèle ML (11 features FTK)."""
     if not settings.enable_ml_fraud_detection:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Fraud detection service is disabled",
+            detail="Service de détection de fraude désactivé",
         )
 
     try:
-        # Initialize ML service
         ml_service = FraudDetectionService(settings)
 
-        # Prepare features (all 31)
-        transaction_data = {"Amount": request.amount}
+        transaction_data = dict.fromkeys(FEATURE_COLS, 0.0)
+        transaction_data["amount"] = float(request.amount)
+        hour = request.hour if request.hour is not None else request.hour_of_day
+        if hour is not None:
+            transaction_data["hour"] = float(hour)
+        else:
+            transaction_data["hour"] = float(datetime.now().hour)
+        transaction_data["day_of_week"] = float(datetime.utcnow().weekday())
 
-        if request.time is not None:
-            transaction_data["Time"] = request.time
-        elif request.hour_of_day is not None:
-            transaction_data["Time"] = request.hour_of_day * 3600
-
-        # Add optional features
         if request.features:
-            transaction_data.update(request.features)
+            for k, v in request.features.items():
+                if k in transaction_data:
+                    transaction_data[k] = float(v)
 
-        # Get prediction
         result = ml_service.predict_fraud(transaction_data)
 
         if "error" in result:
-            logger.error(f"❌ Fraud prediction error: {result['error']}")
+            logger.error("Erreur prédiction: %s", result["error"])
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Fraud detection failed",
+                detail="Échec de la détection de fraude",
             )
 
         logger.info(
-            f"🔍 Fraud check: amount={request.amount}, "
-            f"risk={result['risk_level']}, blocked={result['blocked']}"
+            "Contrôle fraude: amount=%s risk=%s blocked=%s",
+            request.amount,
+            result["risk_level"],
+            result["blocked"],
         )
 
         return FraudCheckResponse(**result)
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Fraud detection error: {e}")
+        logger.error("Erreur service fraude: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Fraud detection service error",
-        )
+            detail="Erreur du service de détection de fraude",
+        ) from e
 
 
 @router.get("/reports")
-async def get_fraud_reports(
-    skip: int = 0,
-    limit: int = 50,
-    db: AsyncSession = Depends(get_session),
-):
-    """Get all fraud alerts (admin only)."""
+async def get_fraud_reports(db: DbSession, skip: int = 0, limit: int = 50):
+    """Liste des alertes fraude."""
     result = await db.execute(
-        select(FraudAlert)
-        .order_by(FraudAlert.created_at.desc())
-        .offset(skip)
-        .limit(limit)
+        select(FraudAlert).order_by(FraudAlert.created_at.desc()).offset(skip).limit(limit)
     )
     alerts = result.scalars().all()
 
@@ -100,12 +99,15 @@ async def get_fraud_reports(
     }
 
 
+@router.get("/list")
+async def list_fraud(db: DbSession, limit: int = 50):
+    """Alias UI pour /fraud/reports."""
+    return await get_fraud_reports(db, skip=0, limit=limit)
+
+
 @router.get("/check/{address}")
-async def check_address_fraud(
-    address: str,
-    db: AsyncSession = Depends(get_session),
-):
-    """Get fraud history for an address."""
+async def check_address_fraud(address: str, db: DbSession):
+    """Historique fraude pour une adresse."""
     result = await db.execute(
         select(FraudAlert)
         .where(FraudAlert.suspect_address == address)
@@ -115,11 +117,7 @@ async def check_address_fraud(
     alerts = result.scalars().all()
 
     if not alerts:
-        return {
-            "address": address,
-            "fraud_count": 0,
-            "alerts": [],
-        }
+        return {"address": address, "fraud_count": 0, "alerts": []}
 
     high_risk_count = sum(1 for a in alerts if a.risk_level in ["HIGH", "CRITICAL"])
 

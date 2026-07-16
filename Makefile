@@ -1,10 +1,15 @@
-"""Makefile for common development tasks."""
-
 .PHONY: help install dev-install lint format type-check bandit security test pre-commit clean setup-db migrate docker-build docker-up docker-down docker-logs docker-ps docker-shell docker-test
+
+# Prefer project venv when present so `make` works without `source venv/bin/activate`
+PYTHON ?= $(shell if [ -x venv/bin/python ]; then echo venv/bin/python; else echo python3; fi)
+PIP = $(PYTHON) -m pip
+DOCKER_COMPOSE = docker compose -f docker/docker-compose.yml
 
 help:
 	@echo "GTA Fintech - Available Commands"
 	@echo "=================================="
+	@echo ""
+	@echo "Using PYTHON=$(PYTHON)"
 	@echo ""
 	@echo "📦 Installation:"
 	@echo "  make install        - Install dependencies"
@@ -39,35 +44,35 @@ help:
 	@echo "  make docker-test    - Run tests in Docker"
 
 install:
-	pip install --upgrade pip
-	pip install -e .
+	$(PIP) install --upgrade pip
+	$(PIP) install -e .
 
 dev-install:
-	pip install --upgrade pip
-	pip install -e ".[dev]"
-	pre-commit install
+	$(PIP) install --upgrade pip
+	$(PIP) install -e ".[dev]"
+	$(PYTHON) -m pre_commit install
 
 lint:
-	ruff check config database services routers schemas utils tests
+	$(PYTHON) -m ruff check config database services routers schemas utils tests main.py
 
 format:
-	ruff format config database services routers schemas utils tests
-	ruff check --fix config database services routers schemas utils tests
+	$(PYTHON) -m ruff format config database services routers schemas utils tests main.py
+	$(PYTHON) -m ruff check --fix config database services routers schemas utils tests main.py
 
 type-check:
-	mypy --config-file pyproject.toml
+	$(PYTHON) -m mypy --config-file pyproject.toml
 
 bandit:
-	bandit -c .bandit -r config database services routers schemas utils
+	$(PYTHON) -m bandit -c .bandit -r config database services routers schemas utils
 
 security: lint bandit
 	@echo "✅ Security checks passed"
 
 test:
-	pytest tests/ -v --cov=. --cov-report=html
+	$(PYTHON) -m pytest tests/ -v --cov=. --cov-report=html
 
 pre-commit:
-	pre-commit run --all-files
+	$(PYTHON) -m pre_commit run --all-files
 
 clean:
 	find . -type d -name __pycache__ -exec rm -r {} +
@@ -75,38 +80,38 @@ clean:
 	rm -rf .pytest_cache .mypy_cache .coverage htmlcov dist build *.egg-info
 
 setup-db:
-	python -c "from database import init_db; import asyncio; asyncio.run(init_db())"
+	$(PYTHON) -c "from database import init_db; import asyncio; asyncio.run(init_db())"
 
 migrate:
-	alembic upgrade head
+	$(PYTHON) -m alembic upgrade head
 
 run:
-	uvicorn main:app --reload --host 0.0.0.0 --port 8000
+	$(PYTHON) -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# Docker commands
+# Docker Compose v2 plugin (`docker compose`, not legacy `docker-compose`)
 docker-build:
-	docker-compose -f docker/docker-compose.yml build
+	$(DOCKER_COMPOSE) build
 
 docker-up:
-	docker-compose -f docker/docker-compose.yml up -d
+	$(DOCKER_COMPOSE) up -d
 
 docker-down:
-	docker-compose -f docker/docker-compose.yml down
+	$(DOCKER_COMPOSE) down
 
 docker-ps:
-	docker-compose -f docker/docker-compose.yml ps
+	$(DOCKER_COMPOSE) ps
 
 docker-logs:
-	docker-compose -f docker/docker-compose.yml logs -f
+	$(DOCKER_COMPOSE) logs -f
 
 docker-logs-api:
-	docker-compose -f docker/docker-compose.yml logs -f api
+	$(DOCKER_COMPOSE) logs -f api
 
 docker-shell:
-	docker-compose -f docker/docker-compose.yml exec api bash
+	$(DOCKER_COMPOSE) exec api bash
 
 docker-test:
-	docker-compose -f docker/docker-compose.yml exec api pytest tests/ -v
+	$(DOCKER_COMPOSE) exec api python -m pytest tests/ -v
 
 docker-clean:
-	docker-compose -f docker/docker-compose.yml down -v
+	$(DOCKER_COMPOSE) down -v

@@ -20,7 +20,7 @@ repos:
         name: Ruff check
         entry: ruff check --fix
         language: python
-        additional_dependencies: ["ruff==0.2.2"]
+        additional_dependencies: ["ruff==0.15.21"]
         types_or: [python]
         pass_filenames: true
 
@@ -28,7 +28,7 @@ repos:
         name: Ruff format
         entry: ruff format
         language: python
-        additional_dependencies: ["ruff==0.2.2"]
+        additional_dependencies: ["ruff==0.15.21"]
         types_or: [python]
         pass_filenames: true
 
@@ -80,7 +80,7 @@ repos:
           migrations/)
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.4.1
+    rev: v2.6.0
     hooks:
       - id: pycln
         args: ["--all"]

@@ -1,10 +1,12 @@
 """Database models for GTA Fintech."""
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, Text, ForeignKey, Index
-from sqlalchemy.orm import relationship
-from database import Base
 from datetime import datetime
+
 from passlib.context import CryptContext
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.orm import relationship
+
+from database import Base
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -30,6 +32,12 @@ class User(Base):
 
     __table_args__ = (Index("ix_user_email_active", "email", "is_active"),)
 
+    def __init__(self, **kwargs):
+        kwargs.setdefault("role", "user")
+        kwargs.setdefault("is_active", True)
+        kwargs.setdefault("failed_logins", 0)
+        super().__init__(**kwargs)
+
     def set_password(self, password: str) -> None:
         """Hash and set password."""
         self.password_hash = pwd_context.hash(password)
@@ -40,9 +48,7 @@ class User(Base):
 
     def is_locked(self) -> bool:
         """Check if account is locked."""
-        if self.locked_until and datetime.utcnow() < self.locked_until:
-            return True
-        return False
+        return bool(self.locked_until and datetime.utcnow() < self.locked_until)
 
 
 class Transaction(Base):
@@ -60,6 +66,7 @@ class Transaction(Base):
     risk_score = Column(Integer, default=0)
     risk_level = Column(String(20), default="LOW")  # LOW | MEDIUM | HIGH | CRITICAL
     blocked = Column(Boolean, default=False)
+    approved = Column(Boolean, default=False)  # déblocage manuel superadmin
     tx_hash_ref = Column(String(66), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -129,8 +136,12 @@ class PasswordResetToken(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token_hash = Column(String(64), unique=True, nullable=False)
     expires_at = Column(DateTime, nullable=False)
-    used = Column(Boolean, default=False)
+    used = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("used", False)
+        super().__init__(**kwargs)
 
     def is_valid(self) -> bool:
         """Check if token is still valid."""

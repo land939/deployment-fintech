@@ -1,22 +1,22 @@
-"""Machine Learning fraud detection service."""
+"""Service de détection de fraude par ML (11 features FTK)."""
 
 import json
 import logging
 from pathlib import Path
-from typing import Optional
+
 import joblib
-import numpy as np
 import pandas as pd
+
 from config.settings import Settings
+from services.ml.features import FEATURE_COLS
 
 logger = logging.getLogger(__name__)
 
 
 class FraudDetectionService:
-    """ML-based fraud detection using 31 features."""
+    """Détection de fraude XGBoost sur features calculables en production."""
 
     def __init__(self, settings: Settings):
-        """Initialize ML service with models and scaler."""
         self.settings = settings
         self.fraud_model = None
         self.scaler = None
@@ -25,50 +25,40 @@ class FraudDetectionService:
         self._load_models()
 
     def _load_models(self) -> None:
-        """Load ML models, scaler, and feature columns."""
+        """Charge modèle, scaler et colonnes de features."""
         try:
-            # Load fraud detector model
             if Path(self.settings.ml_model_path).exists():
                 self.fraud_model = joblib.load(self.settings.ml_model_path)
-                logger.info("✅ Fraud detection model loaded")
+                logger.info("Modèle de fraude chargé")
             else:
-                logger.error(f"❌ Fraud model not found: {self.settings.ml_model_path}")
-                raise FileNotFoundError(f"Model not found: {self.settings.ml_model_path}")
+                raise FileNotFoundError(f"Modèle introuvable: {self.settings.ml_model_path}")
 
-            # Load scaler
             if Path(self.settings.ml_scaler_path).exists():
                 self.scaler = joblib.load(self.settings.ml_scaler_path)
-                logger.info("✅ Feature scaler loaded")
+                logger.info("Scaler chargé")
             else:
-                logger.error(f"❌ Scaler not found: {self.settings.ml_scaler_path}")
-                raise FileNotFoundError(f"Scaler not found: {self.settings.ml_scaler_path}")
+                raise FileNotFoundError(f"Scaler introuvable: {self.settings.ml_scaler_path}")
 
-            # Load feature columns
             if Path(self.settings.ml_features_path).exists():
                 with open(self.settings.ml_features_path) as f:
                     self.feature_columns = json.load(f)
-                logger.info(f"✅ Feature columns loaded: {len(self.feature_columns)} features")
-                self.all_features_loaded = len(self.feature_columns) >= 30
+                logger.info("Colonnes features: %s", len(self.feature_columns))
+                self.all_features_loaded = len(self.feature_columns) >= len(FEATURE_COLS)
             else:
-                logger.error(f"❌ Features JSON not found: {self.settings.ml_features_path}")
-                raise FileNotFoundError(f"Features JSON not found: {self.settings.ml_features_path}")
+                raise FileNotFoundError(
+                    f"Features JSON introuvable: {self.settings.ml_features_path}"
+                )
 
         except Exception as e:
-            logger.error(f"❌ Failed to load ML models: {e}")
+            logger.error("Échec chargement modèles ML: %s", e)
             raise
 
-    def predict_fraud(
-        self,
-        transaction_data: dict,
-    ) -> dict:
+    def predict_fraud(self, transaction_data: dict) -> dict:
         """
-        Predict fraud probability using all 31 features.
+        Prédit la probabilité de fraude.
 
         Args:
-            transaction_data: Dict with Amount, Time, and optionally V1-V28
-
-        Returns:
-            Dict with fraud_probability, risk_score, risk_level, blocked
+            transaction_data: dict avec les 11 features FTK (voir FEATURE_COLS)
         """
         if not self.fraud_model or not self.scaler or not self.feature_columns:
             return {
@@ -76,36 +66,18 @@ class FraudDetectionService:
                 "risk_score": 0,
                 "risk_level": "UNKNOWN",
                 "blocked": False,
-                "error": "ML models not loaded",
+                "error": "Modèles ML non chargés",
             }
 
         try:
-            # Initialize feature vector with all columns
-            row = {col: 0.0 for col in self.feature_columns}
-
-            # Fill in provided features
-            for col, value in transaction_data.items():
-                if col in row:
-                    row[col] = float(value)
-
-            # Create DataFrame with exact feature order
+            row = {col: float(transaction_data.get(col, 0.0)) for col in self.feature_columns}
             df = pd.DataFrame([row], columns=self.feature_columns)
+            df[self.feature_columns] = self.scaler.transform(df[self.feature_columns])
 
-            # Get numeric features that need scaling (typically Amount, Time, Hour)
-            # Adjust based on your scaler's expectations
-            numeric_cols = [col for col in ["Amount", "Time", "Hour"] if col in self.feature_columns]
-            if numeric_cols:
-                try:
-                    df[numeric_cols] = self.scaler.transform(df[numeric_cols])
-                except Exception as scale_err:
-                    logger.warning(f"Scaling failed, using raw values: {scale_err}")
-
-            # Predict fraud probability
             proba = self.fraud_model.predict_proba(df)[0]
             fraud_prob = float(proba[1])
             risk_score = int(fraud_prob * 100)
 
-            # Determine risk level and blocking
             if fraud_prob < 0.30:
                 risk_level, blocked = "LOW", False
             elif fraud_prob < 0.60:
@@ -116,8 +88,11 @@ class FraudDetectionService:
                 risk_level, blocked = "CRITICAL", True
 
             logger.info(
-                f"🔍 Fraud prediction: amount={transaction_data.get('Amount', 0)}, "
-                f"prob={fraud_prob:.4f}, risk={risk_level}, blocked={blocked}"
+                "Prédiction fraude: amount=%s prob=%.4f risk=%s blocked=%s",
+                transaction_data.get("amount", 0),
+                fraud_prob,
+                risk_level,
+                blocked,
             )
 
             return {
@@ -129,7 +104,7 @@ class FraudDetectionService:
             }
 
         except Exception as e:
-            logger.error(f"❌ Fraud prediction error: {e}")
+            logger.error("Erreur prédiction fraude: %s", e)
             return {
                 "fraud_probability": 0.5,
                 "risk_score": 50,
@@ -138,22 +113,22 @@ class FraudDetectionService:
                 "error": str(e),
             }
 
-    def get_feature_importance(self) -> Optional[dict]:
-        """Get feature importance from the model."""
+    def get_feature_importance(self) -> dict | None:
+        """Importance des features du modèle."""
         try:
             if hasattr(self.fraud_model, "feature_importances_"):
                 importances = self.fraud_model.feature_importances_
                 if len(importances) == len(self.feature_columns):
                     return {
                         col: float(imp)
-                        for col, imp in zip(self.feature_columns, importances)
+                        for col, imp in zip(self.feature_columns, importances, strict=False)
                     }
         except Exception as e:
-            logger.warning(f"Could not extract feature importance: {e}")
+            logger.warning("Impossible d'extraire l'importance: %s", e)
         return None
 
     def get_model_info(self) -> dict:
-        """Get information about loaded models."""
+        """Infos sur les modèles chargés."""
         return {
             "fraud_model_loaded": self.fraud_model is not None,
             "scaler_loaded": self.scaler is not None,

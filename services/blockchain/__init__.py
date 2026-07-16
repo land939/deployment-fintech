@@ -2,11 +2,23 @@
 
 import json
 import logging
-from typing import Optional
+
 from web3 import Web3
+from web3.constants import ADDRESS_ZERO
+
 from config.settings import Settings
 
 logger = logging.getLogger(__name__)
+
+
+def _is_configured_address(address: str | None) -> bool:
+    """True when address is a non-zero Ethereum address."""
+    if not address:
+        return False
+    try:
+        return Web3.is_address(address) and Web3.to_checksum_address(address) != ADDRESS_ZERO
+    except ValueError:
+        return False
 
 
 class BlockchainService:
@@ -15,7 +27,7 @@ class BlockchainService:
     def __init__(self, settings: Settings):
         """Initialize blockchain connection and contracts."""
         self.settings = settings
-        self.w3: Optional[Web3] = None
+        self.w3: Web3 | None = None
         self.connected = False
         self.token_contract = None
         self.registry_contract = None
@@ -34,9 +46,7 @@ class BlockchainService:
             self.w3 = Web3(Web3.HTTPProvider(self.settings.rpc_url))
 
             if not self.w3.is_connected():
-                logger.error(
-                    f"❌ Failed to connect to blockchain at {self.settings.rpc_url}"
-                )
+                logger.error(f"❌ Failed to connect to blockchain at {self.settings.rpc_url}")
                 return
 
             logger.info(f"✅ Connected to blockchain | Chain ID: {self.w3.eth.chain_id}")
@@ -53,7 +63,7 @@ class BlockchainService:
         """Load smart contract instances."""
         try:
             # Token contract
-            if self.settings.token_address and self.settings.token_address != "0x0":
+            if _is_configured_address(self.settings.token_address):
                 token_abi = self._load_abi("FintechToken")
                 self.token_contract = self.w3.eth.contract(
                     address=Web3.to_checksum_address(self.settings.token_address),
@@ -62,7 +72,7 @@ class BlockchainService:
                 logger.info(f"✅ Token contract loaded: {self.settings.token_address}")
 
             # Registry contract
-            if self.settings.registry_address and self.settings.registry_address != "0x0":
+            if _is_configured_address(self.settings.registry_address):
                 registry_abi = self._load_abi("FraudRegistry")
                 self.registry_contract = self.w3.eth.contract(
                     address=Web3.to_checksum_address(self.settings.registry_address),
@@ -71,7 +81,7 @@ class BlockchainService:
                 logger.info(f"✅ Registry contract loaded: {self.settings.registry_address}")
 
             # Optimizer contract
-            if self.settings.optimizer_address and self.settings.optimizer_address != "0x0":
+            if _is_configured_address(self.settings.optimizer_address):
                 optimizer_abi = self._load_abi("TransactionOptimizer")
                 self.optimizer_contract = self.w3.eth.contract(
                     address=Web3.to_checksum_address(self.settings.optimizer_address),
@@ -91,7 +101,7 @@ class BlockchainService:
             logger.warning(f"⚠️  ABI file not found: abi/{contract_name}.json")
             return []
 
-    def get_balance(self, address: str) -> Optional[float]:
+    def get_balance(self, address: str) -> float | None:
         """Get token balance for an address."""
         if not self.connected or not self.token_contract:
             logger.warning("⚠️  Blockchain not connected or token contract not loaded")
@@ -109,8 +119,8 @@ class BlockchainService:
         self,
         to_address: str,
         amount_tokens: float,
-        from_address: Optional[str] = None,
-    ) -> Optional[dict]:
+        from_address: str | None = None,
+    ) -> dict | None:
         """Send tokens (requires admin key or signed transaction)."""
         if not self.connected or not self.token_contract:
             return {"error": "Blockchain not connected"}

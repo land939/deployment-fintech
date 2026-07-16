@@ -1,11 +1,10 @@
 """Tests for utility functions."""
 
-import pytest
 from utils import (
+    generate_reset_token,
+    is_strong_password,
     is_valid_email,
     is_valid_wallet,
-    is_strong_password,
-    generate_reset_token,
 )
 
 
@@ -79,8 +78,8 @@ class TestTokenGeneration:
 
     def test_generate_unique_tokens(self):
         """Test that each generated token is unique."""
-        tokens1 = set(generate_reset_token()[0] for _ in range(10))
-        tokens2 = set(generate_reset_token()[0] for _ in range(10))
+        tokens1 = {generate_reset_token()[0] for _ in range(10)}
+        tokens2 = {generate_reset_token()[0] for _ in range(10)}
 
         assert len(tokens1) == 10
         assert len(tokens2) == 10

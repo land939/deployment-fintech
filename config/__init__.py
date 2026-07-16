@@ -1,6 +1,12 @@
 """Config package initialization."""
 
-from config.settings import Settings, get_settings, validate_required_settings
-from config.logging import setup_logging
+from config.logging_config import setup_logging
+from config.settings import Settings, SettingsDep, get_settings, validate_required_settings
 
-__all__ = ["Settings", "get_settings", "validate_required_settings", "setup_logging"]
+__all__ = [
+    "Settings",
+    "SettingsDep",
+    "get_settings",
+    "validate_required_settings",
+    "setup_logging",
+]
