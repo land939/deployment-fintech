@@ -90,11 +90,18 @@ async def build_fraud_features(
         .select_from(Transaction)
         .where(sender_match, Transaction.blocked.is_(True)),
     )
+    # Destinataire « connu » = déjà servi par un envoi LÉGITIME uniquement :
+    # une fraude bloquée vers cette adresse ne doit pas la blanchir
+    # (même définition que dans train_fraud_model.py).
     known = await _scalar(
         db,
         select(func.count())
         .select_from(Transaction)
-        .where(sender_match, func.lower(Transaction.receiver) == receiver_l),
+        .where(
+            sender_match,
+            func.lower(Transaction.receiver) == receiver_l,
+            Transaction.blocked.is_(False),
+        ),
     )
     recv_24h = (
         await _scalar(

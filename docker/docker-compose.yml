@@ -62,6 +62,7 @@ services:
       API_PORT: 8000
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
       SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-admin@fintech.local}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-SecurePassword123!}
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       MAIL_SERVER: ${MAIL_SERVER:-localhost}
@@ -97,10 +98,95 @@ services:
       retries: 3
       start_period: 5s
 
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    container_name: gta_fintech_prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    networks:
+      - gta_network
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: gta_fintech_node_exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+    ports:
+      - "9100:9100"
+    networks:
+      - gta_network
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: gta_fintech_postgres_exporter
+    environment:
+      DATA_SOURCE_NAME: postgresql://${DB_USER:-gta_user}:${DB_PASSWORD:-gta_password}@postgres:5432/${DB_NAME:-gta_fintech}?sslmode=disable
+    ports:
+      - "9187:9187"
+    networks:
+      - gta_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.61.0
+    container_name: gta_fintech_redis_exporter
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - gta_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: gta_fintech_grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    networks:
+      - gta_network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:

@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from config import Settings
 from config.settings import get_settings
 from database import Base, get_db, set_session_factory
-from routers import auth, fraud, transactions
+from database.models import User
+from routers import auth, fraud, superadmin, transactions
+from services.auth import get_current_user
 
 
 @pytest.fixture
@@ -86,6 +88,32 @@ async def session_factory(db_engine):
 
 
 @pytest.fixture
+def current_user(valid_wallet_address):
+    """Utilisateur authentifié par défaut pour les tests de routes protégées."""
+    user = User(
+        email="user@example.com",
+        wallet_address=valid_wallet_address,
+        role="user",
+        is_active=True,
+    )
+    user.id = 42
+    return user
+
+
+@pytest.fixture
+def current_superadmin():
+    """Super administrateur authentifié pour les tests de routes /superadmin/api/*."""
+    user = User(
+        email="admin@test.local",
+        wallet_address="0x1111111111111111111111111111111111111111",
+        role="superadmin",
+        is_active=True,
+    )
+    user.id = 1
+    return user
+
+
+@pytest.fixture
 def mock_db_session():
     """Async DB session mock for route tests that don't need real SQL."""
     session = AsyncMock(spec=AsyncSession)
@@ -99,8 +127,15 @@ def mock_db_session():
 
 
 @pytest.fixture
-def api_app(settings, mock_db_session, monkeypatch):
-    """Minimal FastAPI app with routers and dependency overrides."""
+def api_app(settings, mock_db_session, current_user, monkeypatch):
+    """Minimal FastAPI app with routers and dependency overrides.
+
+    get_current_user est surchargé vers un utilisateur "user" authentifié par
+    défaut, afin que les tests existants (validation de payload, etc.) ne
+    soient pas bloqués par la garde JWT. Les tests qui veulent vérifier le
+    401/403 construisent leur propre app sans cette surcharge (voir
+    test_api.py::test_*_requires_auth), ou la remplacent par current_superadmin.
+    """
     get_settings.cache_clear()
     monkeypatch.setattr("config.settings.get_settings", lambda: settings)
     monkeypatch.setattr("config.get_settings", lambda: settings)
@@ -109,6 +144,7 @@ def api_app(settings, mock_db_session, monkeypatch):
     app.include_router(auth.router)
     app.include_router(fraud.router)
     app.include_router(transactions.router)
+    app.include_router(superadmin.router)
 
     async def _override_db() -> AsyncGenerator[AsyncSession, None]:
         yield mock_db_session
@@ -120,6 +156,7 @@ def api_app(settings, mock_db_session, monkeypatch):
     from config.settings import get_settings as _gs
 
     app.dependency_overrides[_gs] = _override_settings
+    app.dependency_overrides[get_current_user] = lambda: current_user
     return app
 
 

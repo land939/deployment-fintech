@@ -5,7 +5,8 @@ from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
-from pydantic_settings import BaseSettings
+from pydantic import AliasChoices, Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +14,18 @@ logger = logging.getLogger(__name__)
 class Settings(BaseSettings):
     """Application settings with validation."""
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
+        populate_by_name=True,
+    )
+
     # Environment
-    environment: str = "local"
+    environment: str = Field(
+        default="local",
+        validation_alias=AliasChoices("ENVIRONMENT", "FLASK_ENV"),
+    )
     debug: bool = True
 
     # API Configuration
@@ -29,7 +40,9 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./gta_fintech.db"
 
     # Security & JWT
-    secret_key: str
+    secret_key: str = Field(
+        validation_alias=AliasChoices("SECRET_KEY", "JWT_SECRET"),
+    )
     jwt_algorithm: str = "HS256"
     jwt_expiration_hours: int = 24
     jwt_refresh_hours: int = 168
@@ -38,6 +51,9 @@ class Settings(BaseSettings):
     superadmin_email: str
     superadmin_password: str
 
+    # Base URL publique (liens dans les emails)
+    app_base_url: str = "http://localhost:8000"
+
     # Email
     mail_server: str | None = None
     mail_port: int | None = None
@@ -45,6 +61,10 @@ class Settings(BaseSettings):
     mail_password: str | None = None
     mail_from: str | None = None
     mail_reset_token_expiry_minutes: int = 30
+
+    # Conversion FTK <-> ETH (taux fixe ; voir services/rates.py pour
+    # brancher plus tard un oracle ou une API de prix)
+    ftk_eth_rate: float = 0.0001  # 1 FTK = 0.0001 ETH
 
     # Blockchain
     rpc_url: str | None = None
@@ -81,12 +101,17 @@ class Settings(BaseSettings):
     enable_ml_fraud_detection: bool = True
     enable_rate_limiting: bool = True
 
-    class Config:
-        """Pydantic config."""
-
-        env_file = ".env"
-        case_sensitive = False
-
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug_flag(cls, value):
+        """Accept common environment labels accidentally assigned to DEBUG."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"release", "prod", "production"}:
+                return False
+            if normalized in {"dev", "development"}:
+                return True
+        return value
 
 @lru_cache
 def get_settings() -> Settings:

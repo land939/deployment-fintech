@@ -321,8 +321,25 @@ body {
 }
 .topbar-title { font-size: 1rem; font-weight: 700; color: var(--dark); letter-spacing: -0.01em; }
 .topbar-title span { color: var(--primary); }
-.topbar-user { font-family: var(--mono); font-size: 0.7rem; color: var(--gray2); margin-left: 0.75rem; }
-.topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+.topbar-user {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--gray2);
+  margin-left: 0.75rem;
+  /* email potentiellement long : tronquer au lieu de déborder sur les voisins */
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
 
 .network-badge, .chain-status {
   display: flex; align-items: center; gap: 0.45rem;
@@ -1330,3 +1347,184 @@ button:focus-visible, a:focus-visible {
   }
   .fraud-score .score-val { font-size: 1.15rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT UNE PAGE (sans sidebar) — logo GTA dans la topbar
+   ══════════════════════════════════════════════════════════════ */
+.main.full { margin-left: 0; }
+
+/* La topbar contient beaucoup d'éléments : autoriser le passage à la
+   ligne plutôt que de laisser les blocs se chevaucher quand la fenêtre
+   rétrécit (flex nowrap + textes nowrap = débordements superposés). */
+.main.full .topbar {
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0;
+  min-width: 0;
+  /* 0 1 auto : partage la ligne avec .topbar-right quand la place suffit,
+     passe à la ligne (wrap du parent) seulement quand elle manque */
+  flex: 0 1 auto;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+.topbar-brand .brand-logo { width: 42px; height: 42px; flex-shrink: 0; }
+.topbar-brand .brand-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.topbar-brand .brand-title span { color: var(--primary); }
+.topbar-brand .brand-sub {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--gray2);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Ancres de section dans la topbar */
+.topnav { display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem; margin-left: 1.5rem; }
+.topnav a {
+  color: var(--gray);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 20px;
+  transition: background 0.12s, color 0.12s;
+}
+.topnav a:hover { color: var(--dark); background: var(--hover); }
+.topnav a.active { color: var(--primary); background: var(--wash-red); }
+
+.topbar .logout-btn { width: auto; margin-top: 0; padding: 0.4rem 0.9rem; font-size: 0.75rem; }
+
+.wallet-chip {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--gray);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.3rem 0.85rem;
+}
+
+/* ── Raisons de blocage IA ── */
+.reason-list { margin: 0.5rem 0 0; padding: 0; list-style: none; }
+.reason-list li {
+  position: relative;
+  padding: 0.28rem 0 0.28rem 1.25rem;
+  font-size: 0.78rem;
+  color: var(--dark);
+  line-height: 1.45;
+}
+.reason-list li::before {
+  content: '⚠';
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-size: 0.72rem;
+}
+
+.reasons-box {
+  margin-top: 0.6rem;
+  background: var(--wash-red);
+  border: 1px solid rgba(229,72,77,0.25);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
+}
+.reasons-box .reasons-title {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--primary);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Ligne repliable « détails » dans les tableaux */
+.details-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--gray);
+  font-family: var(--sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.details-btn:hover { border-color: rgba(229,72,77,0.4); color: var(--primary); }
+tr.details-row > td {
+  background: var(--inset);
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 1rem !important;
+}
+
+/* ── Matrice de confusion dynamique ── */
+.cm-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 6px;
+  align-items: stretch;
+  max-width: 460px;
+  margin: 0 auto;
+}
+.cm-corner, .cm-head {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--gray2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.3rem;
+}
+.cm-cell {
+  border-radius: 10px;
+  padding: 1.1rem 0.5rem;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.cm-cell .cm-val { font-size: 1.35rem; font-weight: 800; font-family: var(--mono); }
+.cm-cell .cm-lbl { font-size: 0.62rem; color: var(--gray); margin-top: 0.25rem; }
+.cm-cell.good { background: var(--wash-green, rgba(48,164,108,0.12)); }
+.cm-cell.good .cm-val { color: var(--green); }
+.cm-cell.bad  { background: var(--wash-red); }
+.cm-cell.bad .cm-val { color: var(--primary); }
+
+@media (max-width: 1440px) {
+  /* L'email connecté est l'info la moins utile de la topbar : on le
+     masque en premier pour que tout tienne sur une seule ligne */
+  .main.full .topbar-user { display: none; }
+}
+@media (max-width: 860px) {
+  .topnav { display: none; }
+  .topbar-brand .brand-sub { display: none; }
+  .main.full .topbar { padding: 0.6rem 1rem; }
+  .main.full .topbar-brand .brand-title { font-size: 0.9rem; }
+  .main.full .topbar-brand .brand-logo { width: 36px; height: 36px; }
+}
+@media (max-width: 560px) {
+  /* Très étroit : ne garder que l'essentiel (badge réseau, thème, logout) */
+  .main.full .wallet-chip { display: none; }
+  .main.full .refresh-btn { display: none; }
+  .network-badge, .chain-status { font-size: 0.6rem; padding: 0.25rem 0.6rem; }
+}
+
+/* Tableaux larges : défilement interne au panneau plutôt que
+   débordement horizontal de toute la page sur petit écran */
+.panel-body { overflow-x: auto; }

@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>GTA-IT Fintech Ma Plateforme</title>
+  {% include '_head.html' %}
+  <script src="/static/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="main full">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">
+        {% include '_brand.html' %}
+        <div>
+          <div class="brand-title">GTA-IT <span>Fintech</span></div>
+          <div class="brand-sub">Blockchain · Détection de fraude IA</div>
+        </div>
+      </div>
+      <nav class="topnav">
+        <a href="#envoyer">Envoyer</a>
+        <a href="#transactions">Transactions</a>
+        <a href="#ftk">Mes FTK</a>
+        <a href="#contestations">Contestations</a>
+        <a href="#alertes">Alertes IA</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbarEmail"></span>
+      <button class="details-btn" id="mmBtn" onclick="connectMetaMask()" title="Connecter le portefeuille MetaMask">🦊 MetaMask</button>
+      <div class="wallet-chip" id="walletChip">—</div>
+      <div class="network-badge" id="networkBadge">
+        <div class="dot"></div>
+        <span id="networkLabel">Connexion…</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Changer de thème" aria-label="Changer de thème">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
+      </button>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ── STATISTIQUES ── -->
+    <div class="stats-grid">
+      <div class="stat-card teal">
+        <div class="stat-label">Mes Transactions</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub">envoyées ou reçues</div>
+        <div class="stat-icon">⇄</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Légitimes</div>
+        <div class="stat-value" id="statLegit">—</div>
+        <div class="stat-sub">validées par l'IA</div>
+        <div class="stat-icon">✓</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Bloquées</div>
+        <div class="stat-value" id="statBlocked">—</div>
+        <div class="stat-sub" id="statBlockedSub">par l'IA XGBoost</div>
+        <div class="stat-icon">⚠</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Solde FTK</div>
+        <div class="stat-value" id="statBalance">—</div>
+        <div class="stat-sub" id="statBalanceSub">lecture du contrat ERC-20…</div>
+        <div class="stat-icon">₮</div>
+      </div>
+    </div>
+
+    <!-- ── GRAPHIQUES ── -->
+    <div class="grid-3-1">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Activité des Transactions</div>
+            <div class="panel-sub">Mes dernières transactions, par heure d'envoi</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <canvas id="txChart" height="140"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Répartition IA</div>
+            <div class="panel-sub">Légitimes vs Fraudes</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <canvas id="fraudChart" height="140"></canvas>
+          <div class="gauge-container" style="margin-top:1rem;">
+            <div class="gauge-value" id="fraudRate">0%</div>
+            <div class="gauge-label">Taux de blocage IA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ENVOI ── -->
+    <div class="grid-2" id="envoyer">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Envoyer des FTK</div>
+            <div class="panel-sub">Analyse IA automatique avant chaque envoi</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="send-form">
+            <div>
+              <label>Adresse Destinataire</label>
+              <input type="text" id="sendTo" placeholder="0x..." />
+            </div>
+            <div class="form-row">
+              <div>
+                <label>Montant (FTK)</label>
+                <input type="number" id="sendAmount" placeholder="100" min="0.01" step="0.01"/>
+              </div>
+            </div>
+            <button class="btn-send" id="sendBtn" onclick="sendTransaction()">
+              Envoyer avec analyse IA
+            </button>
+            <div class="tx-result" id="txResult"></div>
+            <div class="reasons-box" id="txReasons" style="display:none;">
+              <div class="reasons-title">Pourquoi la transaction a été bloquée</div>
+              <ul class="reason-list" id="txReasonsList"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Vérifier une Adresse</div>
+            <div class="panel-sub">Historique fraude du registre</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="check-form">
+            <input type="text" id="checkAddr" placeholder="0x... adresse à vérifier"/>
+            <button class="btn-check" onclick="checkAddress()">Vérifier</button>
+          </div>
+          <div class="check-result" id="checkResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TRANSACTIONS ── -->
+    <div class="panel" id="transactions">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Historique des Transactions</div>
+          <div class="panel-sub">Analysées par l'IA XGBoost_v2; cliquez « Détails » sur une transaction bloquée</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="filters">
+          <button class="filter-btn active" onclick="filterTx('all', this)">Toutes</button>
+          <button class="filter-btn" onclick="filterTx('legit', this)">Légitimes</button>
+          <button class="filter-btn" onclick="filterTx('blocked', this)">Bloquées</button>
+        </div>
+        <div id="txTableContainer">
+          <div class="loading">Chargement des transactions...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HISTORIQUE FTK ── -->
+    <div class="panel" id="ftk">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Mes FTK — crédits et débits</div>
+          <div class="panel-sub" id="ftkSub">Solde lu sur le smart contract ERC-20 · conversion FTK → ETH</div>
+        </div>
+        <span class="panel-count" id="ftkCount">0</span>
+      </div>
+      <div class="panel-body">
+        <div class="stats-row" style="margin-bottom:1.25rem;">
+          <div class="mini-stat">
+            <div>
+              <div class="ms-val" id="ftkBalance">—</div>
+              <div class="ms-lbl">Solde on-chain (FTK)</div>
+            </div>
+          </div>
+          <div class="mini-stat">
+            <div>
+              <div class="ms-val" id="ftkBalanceEth" style="color:var(--blue)">—</div>
+              <div class="ms-lbl">Équivalent ETH</div>
+            </div>
+          </div>
+          <div class="mini-stat">
+            <div>
+              <div class="ms-val" id="ftkCredits" style="color:var(--green)">—</div>
+              <div class="ms-lbl">Total crédits (FTK)</div>
+            </div>
+          </div>
+          <div class="mini-stat">
+            <div>
+              <div class="ms-val" id="ftkDebits" style="color:var(--primary)">—</div>
+              <div class="ms-lbl">Total débits (FTK)</div>
+            </div>
+          </div>
+        </div>
+        <div id="ftkHistory">
+          <div class="loading">Chargement de l'historique...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTESTATIONS ── -->
+    <div class="panel" id="contestations">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Mes Contestations</div>
+          <div class="panel-sub">Demandes de déblocage envoyées à l'administrateur — suivez leur état ici</div>
+        </div>
+        <span class="panel-count" id="disputeCount">0</span>
+      </div>
+      <div class="panel-body">
+        <div id="disputeList">
+          <div class="empty">Aucune contestation — contestez une transaction bloquée depuis « Détails »</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALERTES ── -->
+    <div class="panel" id="alertes">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Mes Alertes Fraude</div>
+          <div class="panel-sub">Transactions bloquées par l'IA, avec les facteurs de risque détectés</div>
+        </div>
+        <span class="panel-count" id="alertCount">0</span>
+      </div>
+      <div class="panel-body">
+        <div id="fraudList">
+          <div class="loading">Chargement des alertes...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+<script>
+  const token  = localStorage.getItem('token');
+  const wallet = localStorage.getItem('wallet');
+  if (!token) window.location.href = '/';
+  initShell();
+
+  const headers = {
+    'Content-Type' : 'application/json',
+    'Authorization': 'Bearer ' + token
+  };
+
+  /* ── Chart.js : couleurs du thème actif ── */
+  function chartColors() {
+    const s = getComputedStyle(document.documentElement);
+    const v = n => s.getPropertyValue(n).trim();
+    return { surface: v('--surface'), blue: v('--blue'), red: v('--primary'),
+             grid: v('--chart-grid'), ink: v('--gray') };
+  }
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+
+  let txChartInstance, fraudChartInstance;
+  let allTx = [];
+
+  window.addEventListener('themechange', () => {
+    updateTxChart(allTx);
+    updateFraudChart(allTx.length, allTx.filter(t => t.blocked).length);
+  });
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d) ? '—' : d.toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }
+
+  /* ── CHARGEMENT PRINCIPAL ── */
+  async function loadAll() {
+    try {
+      const r = await fetch('/transactions/recent?limit=50', { headers });
+      const d = await r.json();
+      allTx = d.transactions || [];
+
+      const total   = allTx.length;
+      const blocked = allTx.filter(t => t.blocked || t.status === 'blocked' || t.approved).length;
+      const rate    = total ? ((allTx.filter(t => t.blocked).length / total) * 100).toFixed(1) + '%' : '0%';
+
+      document.getElementById('statTotal').textContent   = total;
+      document.getElementById('statLegit').textContent   = total - allTx.filter(t => t.blocked).length;
+      document.getElementById('statBlocked').textContent = allTx.filter(t => t.blocked).length;
+      document.getElementById('fraudRate').textContent   = rate;
+
+      updateTxChart(allTx);
+      updateFraudChart(total, allTx.filter(t => t.blocked).length);
+      renderTable(allTx);
+    } catch(e) {
+      document.getElementById('txTableContainer').innerHTML =
+        '<div class="empty">Erreur de chargement</div>';
+    }
+    loadAlerts();
+    loadWallet();
+    loadDisputes();
+  }
+
+  /* ── Config chain (adresse du contrat FTK, taux FTK→ETH) ── */
+  let chainCfg = { token_address: null, ftk_eth_rate: 0.0001, chain_id: null };
+  fetch('/status').then(r => r.json()).then(d => { chainCfg = d; }).catch(() => {});
+
+  const fmtFtk = n => parseFloat(n).toLocaleString('fr-FR', {maximumFractionDigits: 2});
+  const fmtEth = n => parseFloat(n).toLocaleString('fr-FR', {maximumFractionDigits: 6});
+
+  /* ── SOLDE + HISTORIQUE FTK (smart contract ERC-20) ── */
+  async function loadWallet() {
+    try {
+      const r = await fetch('/wallet/summary', { headers });
+      if (!r.ok) return;
+      const d = await r.json();
+
+      if (d.on_chain) {
+        document.getElementById('statBalance').textContent = fmtFtk(d.balance_ftk);
+        document.getElementById('statBalanceSub').textContent =
+          `≈ ${fmtEth(d.balance_eth)} ETH · 1 FTK = ${d.ftk_eth_rate} ETH`;
+        document.getElementById('ftkBalance').textContent = fmtFtk(d.balance_ftk);
+        document.getElementById('ftkBalanceEth').textContent = fmtEth(d.balance_eth);
+      } else {
+        document.getElementById('statBalance').textContent = '—';
+        document.getElementById('statBalanceSub').textContent = 'blockchain hors ligne';
+        document.getElementById('ftkBalance').textContent = 'hors ligne';
+        document.getElementById('ftkBalanceEth').textContent = '—';
+      }
+      document.getElementById('ftkCredits').textContent = fmtFtk(d.total_credits_ftk);
+      document.getElementById('ftkDebits').textContent  = fmtFtk(d.total_debits_ftk);
+
+      const rh = await fetch('/wallet/history?limit=15', { headers });
+      const dh = await rh.json();
+      const moves = dh.movements || [];
+      document.getElementById('ftkCount').textContent = dh.total || 0;
+      const cont = document.getElementById('ftkHistory');
+      if (moves.length === 0) {
+        cont.innerHTML = '<div class="empty">Aucun mouvement FTK pour le moment</div>';
+        return;
+      }
+      cont.innerHTML = `
+        <table class="tx-table">
+          <thead><tr><th>Sens</th><th>Montant</th><th>Équiv. ETH</th><th>Contrepartie</th><th>Statut</th><th>Date</th></tr></thead>
+          <tbody>
+            ${moves.map(m => `
+              <tr>
+                <td><span class="badge ${m.direction === 'credit' ? 'success' : 'blocked'}">${m.direction === 'credit' ? '↓ Crédit' : '↑ Débit'}</span></td>
+                <td style="font-weight:700;color:${m.direction === 'credit' ? 'var(--green)' : 'var(--primary)'}">
+                  ${m.direction === 'credit' ? '+' : '−'}${fmtFtk(m.amount_ftk)} FTK</td>
+                <td style="color:var(--blue)">${fmtEth(m.amount_eth)} ETH</td>
+                <td><span class="addr-short">${m.counterparty ? m.counterparty.slice(0,8)+'…'+m.counterparty.slice(-4) : '—'}</span></td>
+                <td>${m.tx_hash ? '<span class="badge success" title="' + m.tx_hash + '">⛓ on-chain</span>' : `<span style="color:var(--gray);font-size:0.7rem;">${m.status}</span>`}</td>
+                <td style="color:var(--gray)">${fmtDate(m.created_at)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    } catch(e) { console.error('wallet:', e); }
+  }
+
+  /* ── CONTESTATIONS ── */
+  async function loadDisputes() {
+    try {
+      const r = await fetch('/disputes/mine', { headers });
+      if (!r.ok) return;
+      const d = await r.json();
+      const list = d.disputes || [];
+      document.getElementById('disputeCount').textContent = d.total || 0;
+      const cont = document.getElementById('disputeList');
+      if (list.length === 0) {
+        cont.innerHTML = '<div class="empty">Aucune contestation — contestez une transaction bloquée depuis « Détails »</div>';
+        return;
+      }
+      const badge = s => s === 'accepted' ? 'success' : s === 'rejected' ? 'blocked' : 'MEDIUM';
+      cont.innerHTML = list.map(dp => `
+        <div class="fraud-card">
+          <div class="fraud-icon" style="${dp.status === 'accepted' ? 'background:var(--wash-green,rgba(48,185,110,0.12));color:var(--green);' : dp.status === 'pending' ? 'background:var(--wash-gold);color:var(--gold);' : ''}">
+            ${dp.status === 'accepted' ? '✓' : dp.status === 'rejected' ? '✕' : '…'}
+          </div>
+          <div class="fraud-info">
+            <div class="fraud-title">${dp.transaction ? fmtFtk(dp.transaction.amount) + ' FTK' : ''} — <span class="badge ${badge(dp.status)}">${dp.status_label}</span></div>
+            <div class="fraud-meta">Envoyée le ${fmtDate(dp.created_at)}${dp.resolved_at ? ' · instruite le ' + fmtDate(dp.resolved_at) : ''}</div>
+            <div style="font-size:0.78rem;color:var(--dark);margin-top:0.4rem;">« ${dp.message} »</div>
+            ${dp.admin_response ? `<div style="font-size:0.75rem;color:var(--gray);margin-top:0.35rem;">Réponse admin : « ${dp.admin_response} »</div>` : ''}
+          </div>
+        </div>`).join('');
+    } catch(e) { console.error('disputes:', e); }
+  }
+
+  async function submitDispute(txId, btn) {
+    const field = document.getElementById('disputeMsg-' + txId);
+    const msg = (field ? field.value : '').trim();
+    if (msg.length < 10) {
+      field.style.borderColor = 'var(--primary)';
+      field.placeholder = 'Expliquez en quelques mots (10 caractères minimum)…';
+      return;
+    }
+    btn.disabled = true; btn.textContent = 'Envoi…';
+    try {
+      const r = await fetch('/disputes', {
+        method: 'POST', headers,
+        body: JSON.stringify({ transaction_id: txId, message: msg })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        btn.textContent = '✓ Envoyée';
+        loadDisputes();
+        document.getElementById('contestations').scrollIntoView({ behavior: 'smooth' });
+      } else {
+        btn.disabled = false; btn.textContent = 'Contester';
+        field.value = '';
+        field.placeholder = d.detail || 'Erreur — réessayez';
+      }
+    } catch(e) {
+      btn.disabled = false; btn.textContent = 'Contester';
+    }
+  }
+
+  /* ── TABLE TRANSACTIONS + DÉTAILS ── */
+  function renderTable(txs) {
+    const container = document.getElementById('txTableContainer');
+    if (!txs || txs.length === 0) {
+      container.innerHTML = '<div class="empty">Aucune transaction pour le moment</div>';
+      return;
+    }
+    container.innerHTML = `
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Statut</th>
+            <th>Destinataire</th>
+            <th>Montant</th>
+            <th>Score IA</th>
+            <th>Niveau</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${txs.map((tx, i) => {
+            const statut = tx.blocked
+              ? '<span class="badge blocked">✕ Bloqué</span>'
+              : tx.approved
+                ? '<span class="badge success" title="Blocage levé par le super admin">✓ Autorisé</span>'
+                : '<span class="badge success">✓ Validé</span>';
+            const hasReasons = (tx.reasons || []).length > 0;
+            return `
+            <tr>
+              <td>${statut}</td>
+              <td><span class="addr-short">${tx.receiver ? tx.receiver.slice(0,8)+'…'+tx.receiver.slice(-4) : 'N/A'}</span></td>
+              <td style="color:${tx.blocked ? 'var(--primary)' : 'var(--green)'}; font-weight:700">${parseFloat(tx.amount || 0).toFixed(2)} FTK</td>
+              <td>${tx.risk_score || 0}/100</td>
+              <td><span class="badge ${tx.risk_level}">${tx.risk_level || 'N/A'}</span></td>
+              <td style="color:var(--gray)">${fmtDate(tx.created_at)}</td>
+              <td>${hasReasons ? `<button class="details-btn" onclick="toggleDetails(${i}, this)">Détails</button>` : ''}</td>
+            </tr>
+            ${hasReasons ? `
+            <tr class="details-row" id="details-${i}" style="display:none;">
+              <td colspan="7">
+                <div class="reasons-title" style="font-family:var(--mono);font-size:0.6rem;color:var(--primary);letter-spacing:0.12em;text-transform:uppercase;">
+                  Pourquoi cette transaction a été signalée
+                </div>
+                <ul class="reason-list">${tx.reasons.map(r => `<li>${r}</li>`).join('')}</ul>
+                ${tx.blocked ? `
+                <div style="font-size:0.72rem;color:var(--gray);margin-top:0.4rem;">
+                  Vous estimez ce blocage injustifié ? Expliquez pourquoi — l'administrateur instruira votre demande.
+                </div>
+                <div style="display:flex;gap:0.6rem;margin-top:0.6rem;align-items:flex-start;">
+                  <textarea id="disputeMsg-${tx.id}" rows="2" placeholder="Ex. : achat de matériel professionnel, facture disponible…"
+                    style="flex:1;background:var(--inset);border:1px solid var(--border);border-radius:8px;color:var(--dark);font-family:var(--sans);font-size:0.78rem;padding:0.5rem 0.7rem;resize:vertical;"></textarea>
+                  <button class="btn-check" style="white-space:nowrap;" onclick="submitDispute('${tx.id}', this)">Contester</button>
+                </div>` : ''}
+              </td>
+            </tr>` : ''}`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function toggleDetails(i, btn) {
+    const row = document.getElementById('details-' + i);
+    if (!row) return;
+    const visible = row.style.display !== 'none';
+    row.style.display = visible ? 'none' : '';
+    btn.textContent = visible ? 'Détails' : 'Masquer';
+  }
+
+  function filterTx(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (type === 'all')          renderTable(allTx);
+    else if (type === 'blocked') renderTable(allTx.filter(t => t.blocked || t.approved));
+    else                         renderTable(allTx.filter(t => !t.blocked && !t.approved));
+  }
+
+  /* ── ALERTES FRAUDE ── */
+  async function loadAlerts() {
+    const container = document.getElementById('fraudList');
+    try {
+      const r = await fetch('/fraud/reports', { headers });
+      const d = await r.json();
+      const alerts = d.alerts || [];
+      document.getElementById('alertCount').textContent = d.total || 0;
+
+      if (alerts.length === 0) {
+        container.innerHTML = '<div class="empty">Aucune fraude détectée — vos transactions sont saines ✓</div>';
+        return;
+      }
+      container.innerHTML = '<div class="fraud-list">' +
+        alerts.map(a => `
+          <div class="fraud-card">
+            <div class="fraud-icon">${a.blocked ? '✕' : '✓'}</div>
+            <div class="fraud-info">
+              <div class="fraud-title">${parseFloat(a.amount || 0).toFixed(2)} FTK — ${a.blocked ? 'bloquée' : 'blocage levé'}</div>
+              <div class="fraud-meta">${fmtDate(a.created_at)}</div>
+              <span class="badge-crit ${a.risk_level}">${a.risk_level}</span>
+              ${(a.reasons || []).length ? `<ul class="reason-list">${a.reasons.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
+            </div>
+            <div class="fraud-score">
+              <div class="score-val">${a.risk_score || 0}</div>
+              <div class="score-lbl">score IA</div>
+            </div>
+          </div>`).join('') + '</div>';
+    } catch(e) {
+      container.innerHTML = '<div class="empty">Erreur de chargement</div>';
+    }
+  }
+
+  /* ── GRAPHIQUES ── */
+  function updateTxChart(txs) {
+    const C = chartColors();
+    Chart.defaults.color = C.ink;
+    const buckets = Array.from({length: 12}, () => ({ legit: 0, fraud: 0 }));
+    (txs || []).forEach(t => {
+      const d = new Date(t.created_at);
+      if (isNaN(d)) return;
+      const b = Math.floor(d.getHours() / 2);
+      if (t.blocked) buckets[b].fraud++; else buckets[b].legit++;
+    });
+    const labels = Array.from({length: 12}, (_, i) => String(i*2).padStart(2,'0') + 'h');
+
+    if (txChartInstance) txChartInstance.destroy();
+    txChartInstance = new Chart(document.getElementById('txChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Légitimes', data: buckets.map(b => b.legit),
+            backgroundColor: C.blue, borderColor: C.surface, borderWidth: 1, borderRadius: 3, stack: 's' },
+          { label: 'Bloquées',  data: buckets.map(b => b.fraud),
+            backgroundColor: C.red,  borderColor: C.surface, borderWidth: 1, borderRadius: 3, stack: 's' },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { boxWidth: 10, boxHeight: 10, font: { size: 11 } } } },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+          y: { stacked: true, grid: { color: C.grid }, border: { display: false },
+               ticks: { precision: 0, font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  function updateFraudChart(total, blocked) {
+    const C = chartColors();
+    Chart.defaults.color = C.ink;
+    const legit = Math.max(0, (total || 0) - (blocked || 0));
+    if (fraudChartInstance) fraudChartInstance.destroy();
+    fraudChartInstance = new Chart(document.getElementById('fraudChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Légitimes', 'Fraudes bloquées'],
+        datasets: [{
+          data: [legit, blocked || 0],
+          backgroundColor: [C.blue, C.red],
+          borderColor: C.surface,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: '72%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: { size: 11 } } } }
+      }
+    });
+  }
+
+  /* ── METAMASK ── */
+  let mmAccount = null;
+
+  function mmUpdateBtn() {
+    const btn = document.getElementById('mmBtn');
+    if (!btn) return;
+    if (mmAccount) {
+      btn.textContent = '🦊 ' + mmAccount.slice(0, 6) + '…' + mmAccount.slice(-4);
+      btn.style.borderColor = 'rgba(48,185,110,0.5)';
+      btn.title = 'MetaMask connecté — les envois seront signés par ce wallet';
+    } else {
+      btn.textContent = '🦊 MetaMask';
+      btn.style.borderColor = '';
+      btn.title = 'Connecter le portefeuille MetaMask';
+    }
+  }
+
+  async function connectMetaMask() {
+    if (typeof window.ethereum === 'undefined') {
+      alert('MetaMask non détecté. Installez l\'extension puis rechargez la page.');
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      mmAccount = accounts[0];
+
+      // Associer ce wallet au compte si différent de celui enregistré
+      if (mmAccount.toLowerCase() !== (localStorage.getItem('wallet') || '').toLowerCase()) {
+        const ok = confirm(
+          'Ce wallet MetaMask (' + mmAccount.slice(0, 10) + '…) est différent de celui associé à votre compte.\n' +
+          'L\'associer maintenant ? Vos transactions et votre solde utiliseront cette adresse.'
+        );
+        if (ok) {
+          const r = await fetch('/wallet/link', {
+            method: 'POST', headers,
+            body: JSON.stringify({ address: mmAccount })
+          });
+          const d = await r.json();
+          if (r.ok) {
+            localStorage.setItem('wallet', d.wallet);
+            const chip = document.getElementById('walletChip');
+            if (chip) chip.textContent = d.wallet.slice(0, 6) + '…' + d.wallet.slice(-4);
+            loadAll();
+          } else {
+            alert('Association impossible : ' + (d.detail || 'erreur serveur'));
+            mmAccount = null;
+          }
+        } else {
+          mmAccount = null;
+        }
+      }
+      mmUpdateBtn();
+    } catch (e) {
+      console.error('MetaMask:', e);
+    }
+  }
+
+  /* Reconnexion silencieuse si le site est déjà autorisé dans MetaMask */
+  if (typeof window.ethereum !== 'undefined') {
+    window.ethereum.request({ method: 'eth_accounts' }).then(accs => {
+      if (accs.length && accs[0].toLowerCase() === (localStorage.getItem('wallet') || '').toLowerCase()) {
+        mmAccount = accs[0];
+        mmUpdateBtn();
+      }
+    }).catch(() => {});
+    window.ethereum.on && window.ethereum.on('accountsChanged', () => { mmAccount = null; mmUpdateBtn(); });
+  }
+
+  /* Encode l'appel ERC-20 transfer(to, amount) : selector a9059cbb + args ABI */
+  function erc20TransferData(to, amountFtk) {
+    const addr = to.toLowerCase().replace('0x', '').padStart(64, '0');
+    // amount × 10^18 sans flottant : centièmes de FTK × 10^16
+    const wei = BigInt(Math.round(amountFtk * 100)) * (10n ** 16n);
+    return '0xa9059cbb' + addr + wei.toString(16).padStart(64, '0');
+  }
+
+  /* Transfert FTK signé dans MetaMask, puis confirmation côté API */
+  async function sendOnChain(txId, receiver, amountFtk) {
+    if (!mmAccount || !chainCfg.token_address) return null;
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: mmAccount,
+        to: chainCfg.token_address,
+        data: erc20TransferData(receiver, amountFtk),
+      }],
+    });
+    const r = await fetch(`/transactions/${txId}/confirm`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ tx_hash: txHash })
+    });
+    const d = await r.json();
+    return r.ok ? d : { error: d.detail || 'confirmation refusée' };
+  }
+
+  /* ── ENVOI DE TRANSACTION ── */
+  async function sendTransaction() {
+    const btn        = document.getElementById('sendBtn');
+    const result     = document.getElementById('txResult');
+    const reasonsBox = document.getElementById('txReasons');
+    const to         = document.getElementById('sendTo').value.trim();
+    const amount     = document.getElementById('sendAmount').value;
+
+    reasonsBox.style.display = 'none';
+
+    if (!to || !amount) {
+      result.className     = 'tx-result blocked';
+      result.style.display = 'block';
+      result.textContent   = '⚠ Remplissez tous les champs';
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Analyse IA en cours…';
+    result.style.display = 'none';
+
+    try {
+      const r = await fetch('/transactions/send', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ receiver: to, amount: parseFloat(amount) })
+      });
+      const d = await r.json();
+
+      if (r.ok && !d.blocked) {
+        result.className = 'tx-result success';
+        result.innerHTML =
+          `✓ Transaction acceptée par l'IA\n` +
+          `Score IA : ${d.risk_score}/100 (${d.risk_level})\n` +
+          `Coût     : ${fmtFtk(d.amount)} FTK ≈ ${fmtEth(d.amount_eth)} ETH\n` +
+          `Réf.     : ${d.id ? d.id.slice(0,18)+'…' : 'N/A'}`;
+
+        // Wallet connecté → transfert ERC-20 réel signé dans MetaMask
+        if (mmAccount && chainCfg.token_address) {
+          result.innerHTML += `\nSignature MetaMask en cours…`;
+          result.style.display = 'block';
+          try {
+            const oc = await sendOnChain(d.id, to, parseFloat(amount));
+            result.innerHTML = result.innerHTML.replace('Signature MetaMask en cours…',
+              oc && oc.ok
+                ? `⛓ Transfert on-chain confirmé : ${oc.tx_hash.slice(0,20)}…`
+                : `⚠ Transfert on-chain non abouti : ${(oc && oc.error) || 'inconnu'}`);
+          } catch (e) {
+            result.innerHTML = result.innerHTML.replace('Signature MetaMask en cours…',
+              '⚠ Signature refusée ou annulée dans MetaMask — transaction enregistrée hors chaîne.');
+          }
+        }
+      } else if (r.ok && d.blocked) {
+        result.className = 'tx-result blocked';
+        result.innerHTML =
+          `✕ Transaction BLOQUÉE par l'IA\n` +
+          `Score risque : ${d.risk_score}/100 (${d.risk_level})`;
+        const list = document.getElementById('txReasonsList');
+        list.innerHTML = (d.reasons || []).map(x => `<li>${x}</li>`).join('')
+          || '<li>Comportement jugé anormal par le modèle</li>';
+        reasonsBox.style.display = 'block';
+      } else {
+        result.className = 'tx-result blocked';
+        result.textContent = '⚠ ' + (d.detail || d.error || 'Requête invalide');
+      }
+      result.style.display = 'block';
+      loadAll();
+
+    } catch(e) {
+      result.className     = 'tx-result blocked';
+      result.textContent   = '⚠ Erreur serveur : ' + e.message;
+      result.style.display = 'block';
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Envoyer avec analyse IA';
+    }
+  }
+
+  /* ── VÉRIFICATION D'ADRESSE ── */
+  async function checkAddress() {
+    const addr   = document.getElementById('checkAddr').value.trim();
+    const result = document.getElementById('checkResult');
+    if (!addr) return;
+
+    result.style.display = 'block';
+    result.innerHTML = '<span style="color:var(--gray)">Vérification en cours...</span>';
+
+    try {
+      const r = await fetch(`/fraud/check/${addr}`, { headers });
+      const d = await r.json();
+      if (!r.ok) {
+        result.innerHTML = `<span style="color:var(--primary)">Erreur : ${d.detail || 'Adresse invalide'}</span>`;
+        return;
+      }
+      const isRisky = (d.high_risk_count || 0) > 0;
+      result.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div>
+            <div style="color:var(--gray2);font-size:0.62rem;margin-bottom:0.3rem">ADRESSE</div>
+            <div style="color:var(--dark)">${d.address ? d.address.slice(0,18)+'…' : 'N/A'}</div>
+          </div>
+          <div>
+            <div style="color:var(--gray2);font-size:0.62rem;margin-bottom:0.3rem">STATUT RISQUE</div>
+            <div style="color:${isRisky ? 'var(--primary)' : 'var(--green)'};font-weight:700">
+              ${isRisky ? '⚠ HAUT RISQUE' : '✓ Faible risque'}
+            </div>
+          </div>
+          <div>
+            <div style="color:var(--gray2);font-size:0.62rem;margin-bottom:0.3rem">FRAUDES SIGNALÉES</div>
+            <div style="color:var(--dark)">${d.fraud_count || 0}</div>
+          </div>
+          <div>
+            <div style="color:var(--gray2);font-size:0.62rem;margin-bottom:0.3rem">DERNIER SCORE</div>
+            <div style="color:var(--dark)">${d.latest_risk_score || 0}/100</div>
+          </div>
+        </div>`;
+    } catch(e) {
+      result.innerHTML = `<span style="color:var(--primary)">Erreur serveur</span>`;
+    }
+  }
+
+  /* ── Ancres actives dans la topnav ── */
+  document.querySelectorAll('.topnav a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.querySelectorAll('.topnav a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+    });
+  });
+
+  loadAll();
+  setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

@@ -300,9 +300,23 @@ def compute_features(all_users, events):
                     )
                     if history
                     else CAP_SILENCE_S,
-                    "is_new_receiver": 0 if any(h[2] == receiver for h in history) else 1,
+                    # Un destinataire n'est « connu » que via des envois LÉGITIMES :
+                    # des fraudes bloquées vers une adresse ne doivent pas la
+                    # blanchir pour les tentatives suivantes. Même définition
+                    # dans services/ml/features.py.
+                    "is_new_receiver": 0
+                    if any(h[2] == receiver and h[3] == 0 for h in history)
+                    else 1,
                     "unique_receivers_24h": len({h[2] for h in prev_24h}),
-                    "past_fraud_count": sum(1 for h in history if h[3] == 1),
+                    # Récidive = fraudes d'incidents ANTÉRIEURS (> 1 h) uniquement.
+                    # Compter les événements de la même rafale créerait une fuite :
+                    # en production, les premiers envois d'une rafale ne sont pas
+                    # encore bloqués, donc past_fraud_count reste à 0 — le modèle
+                    # doit détecter la rafale via tx_count_1h / seconds_since_last_tx,
+                    # pas via un label qu'il n'aura jamais en direct.
+                    "past_fraud_count": sum(
+                        1 for h in history if h[3] == 1 and (ts - h[0]).total_seconds() > 3600
+                    ),
                     "label": label,
                 }
             )
@@ -408,6 +422,24 @@ def main():
         "roc_auc": round(float(roc_auc_score(y_test, proba)), 4),
         "pr_auc": round(float(average_precision_score(y_test, proba)), 4),
         "matrice": {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)},
+        # Historique d'entraînement (accuracy / log-loss par itération de
+        # boosting) : consommé par le dashboard admin pour tracer des
+        # courbes Chart.js dynamiques au lieu de PNG figés.
+        "courbes": {
+            "iterations": len(history["validation_0"]["logloss"]),
+            "accuracy_train": [round(1 - e, 5) for e in history["validation_0"]["error"]],
+            "accuracy_val": [round(1 - e, 5) for e in history["validation_1"]["error"]],
+            "logloss_train": [round(v, 5) for v in history["validation_0"]["logloss"]],
+            "logloss_val": [round(v, 5) for v in history["validation_1"]["logloss"]],
+        },
+        "importance_features": {
+            col: round(float(imp), 5)
+            for col, imp in sorted(
+                zip(FEATURE_COLS, xgb.feature_importances_),
+                key=lambda kv: kv[1],
+                reverse=True,
+            )
+        },
         "hyperparametres": {
             "n_estimators": 400,
             "max_depth": 6,

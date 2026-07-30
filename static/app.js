@@ -22,7 +22,7 @@ function initShell() {
   const wallet = localStorage.getItem('wallet');
   const email  = localStorage.getItem('email');
 
-  const walletEl = document.getElementById('sidebarWallet');
+  const walletEl = document.getElementById('sidebarWallet') || document.getElementById('walletChip');
   if (walletEl && wallet) walletEl.textContent = wallet.slice(0, 6) + '…' + wallet.slice(-4);
 
   const emailEl = document.getElementById('topbarEmail');

@@ -10,6 +10,7 @@ from config import SettingsDep
 from database import DbSession
 from database.models import FraudAlert
 from schemas import FraudCheckRequest, FraudCheckResponse
+from services.auth import CurrentUser
 from services.ml import get_fraud_service
 from services.ml.features import FEATURE_COLS
 
@@ -73,11 +74,15 @@ async def check_fraud(
 
 
 @router.get("/reports")
-async def get_fraud_reports(db: DbSession, skip: int = 0, limit: int = 50):
-    """Liste des alertes fraude."""
-    result = await db.execute(
-        select(FraudAlert).order_by(FraudAlert.created_at.desc()).offset(skip).limit(limit)
-    )
+async def get_fraud_reports(db: DbSession, user: CurrentUser, skip: int = 0, limit: int = 50):
+    """Alertes fraude de l'utilisateur authentifié.
+
+    Vue globale : /superadmin/api/alerts (réservée au super admin).
+    """
+    stmt = select(FraudAlert).order_by(FraudAlert.created_at.desc()).offset(skip).limit(limit)
+    if user.role != "superadmin":
+        stmt = stmt.where(FraudAlert.user_id == user.id)
+    result = await db.execute(stmt)
     alerts = result.scalars().all()
 
     return {
@@ -85,10 +90,12 @@ async def get_fraud_reports(db: DbSession, skip: int = 0, limit: int = 50):
         "alerts": [
             {
                 "id": alert.id,
+                "transaction_id": alert.transaction_id,
                 "suspect": alert.suspect_address,
                 "amount": alert.amount,
                 "risk_score": alert.risk_score,
                 "risk_level": alert.risk_level,
+                "reasons": alert.block_reason.split("; ") if alert.block_reason else [],
                 "blocked": alert.blocked,
                 "created_at": alert.created_at,
             }
@@ -98,14 +105,14 @@ async def get_fraud_reports(db: DbSession, skip: int = 0, limit: int = 50):
 
 
 @router.get("/list")
-async def list_fraud(db: DbSession, limit: int = 50):
+async def list_fraud(db: DbSession, user: CurrentUser, limit: int = 50):
     """Alias UI pour /fraud/reports."""
-    return await get_fraud_reports(db, skip=0, limit=limit)
+    return await get_fraud_reports(db, user, skip=0, limit=limit)
 
 
 @router.get("/check/{address}")
-async def check_address_fraud(address: str, db: DbSession):
-    """Historique fraude pour une adresse."""
+async def check_address_fraud(address: str, db: DbSession, user: CurrentUser):
+    """Historique fraude pour une adresse (registre consultable par tout utilisateur connecté)."""
     result = await db.execute(
         select(FraudAlert)
         .where(FraudAlert.suspect_address == address)
@@ -130,6 +137,7 @@ async def check_address_fraud(address: str, db: DbSession):
                 "amount": a.amount,
                 "risk_score": a.risk_score,
                 "risk_level": a.risk_level,
+                "reasons": a.block_reason.split("; ") if a.block_reason else [],
                 "blocked": a.blocked,
                 "created_at": a.created_at,
             }

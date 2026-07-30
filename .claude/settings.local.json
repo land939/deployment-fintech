@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/c/Users/Arthur Nganou/Code/projet memoire/Code python\" && tail -30 security.log 2>/dev/null | grep -i -E \"mail|forgot|reset\" )",
+      "Read(//c/c/Users/Arthur Nganou/Code/projet memoire/Code python/**)",
+      "Bash(ls \"C:\\\\Users\\\\Arthur Nganou\\\\AppData\\\\Local\\\\Temp\\\\anthropic-skills\")",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__navigate_page",
+      "Bash(.venv/Scripts/python.exe demo_soutenance.py --fast)",
+      "Bash(grep -vE \"DeprecationWarning|datetime.datetime.utcnow|^$\")",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/test_api.py::test_blocked_transaction_creates_alert_with_reasons -q)",
+      "Bash(.venv/Scripts/python.exe -c \"import uvicorn, fastapi; print\\('ok'\\)\")"
+    ]
+  }
+}

@@ -14,6 +14,62 @@ logger = logging.getLogger(__name__)
 _fraud_service: "FraudDetectionService | None" = None
 
 
+def explain_fraud(features: dict) -> list[str]:
+    """Facteurs de risque lisibles, dérivés des 11 features FTK.
+
+    Le modèle XGBoost ne fournit pas d'explication native ; ces règles
+    reprennent les scénarios de fraude du dataset d'entraînement (rafale,
+    montant aberrant, compte neuf, vidage nocturne, récidive) pour dire à
+    l'admin POURQUOI la transaction est suspecte avant de l'autoriser.
+    """
+    f = {k: float(features.get(k, 0.0)) for k in features}
+    reasons: list[str] = []
+
+    ratio = f.get("amount_avg_ratio", 1.0)
+    if ratio >= 10:
+        reasons.append(
+            f"Montant aberrant : {ratio:.0f}× la moyenne habituelle de l'expéditeur"
+        )
+    elif ratio >= 3:
+        reasons.append(f"Montant inhabituel : {ratio:.1f}× la moyenne de l'expéditeur")
+
+    tx_1h = f.get("tx_count_1h", 0)
+    if tx_1h >= 4:
+        reasons.append(f"Rafale d'envois : {tx_1h:.0f} transactions dans la dernière heure")
+    elif f.get("tx_count_24h", 0) >= 12:
+        reasons.append(f"Activité intense : {f['tx_count_24h']:.0f} transactions en 24 h")
+
+    age = f.get("account_age_days", 999)
+    if age < 2 and (tx_1h >= 2 or f.get("amount", 0) > 500 or ratio >= 3):
+        if age < 1 / 24:
+            reasons.append("Compte créé il y a moins d'une heure")
+        else:
+            reasons.append(f"Compte très récent ({age:.1f} jour(s)) et déjà très actif")
+
+    hour = f.get("hour", 12)
+    if 1 <= hour <= 5:
+        reasons.append(f"Envoi nocturne ({int(hour)} h) — plage typique des vidages de compte")
+
+    if f.get("past_fraud_count", 0) >= 1:
+        reasons.append(
+            f"Récidive : {f['past_fraud_count']:.0f} transaction(s) déjà bloquée(s) "
+            "pour cet expéditeur"
+        )
+
+    recv_24h = f.get("unique_receivers_24h", 0)
+    if recv_24h >= 5:
+        reasons.append(f"Dispersion : {recv_24h:.0f} destinataires distincts en 24 h")
+
+    if f.get("is_new_receiver", 0) >= 1 and (ratio >= 3 or 1 <= hour <= 5 or tx_1h >= 3):
+        reasons.append("Destinataire jamais utilisé par cet expéditeur")
+
+    since = f.get("seconds_since_last_tx", 1e9)
+    if since <= 120 and tx_1h >= 2:
+        reasons.append(f"Envoi {since:.0f} s seulement après le précédent")
+
+    return reasons
+
+
 def set_fraud_service(service: "FraudDetectionService | None") -> None:
     """Enregistre le singleton chargé au lifespan."""
     global _fraud_service
@@ -78,11 +134,16 @@ class FraudDetectionService:
             else:
                 risk_level, blocked = "CRITICAL", True
 
+            reasons = explain_fraud(transaction_data)
+            if blocked and not reasons:
+                reasons = ["Combinaison de signaux faibles jugée anormale par le modèle"]
+
             return {
                 "fraud_probability": round(fraud_prob, 4),
                 "risk_score": risk_score,
                 "risk_level": risk_level,
                 "blocked": blocked,
+                "reasons": reasons,
                 "features_used": len(self.feature_columns),
             }
         except Exception as e:
@@ -92,6 +153,7 @@ class FraudDetectionService:
                 "risk_score": 50,
                 "risk_level": "HIGH",
                 "blocked": True,
+                "reasons": ["Erreur du modèle — transaction bloquée par précaution"],
                 "error": str(e),
             }
 

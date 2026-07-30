@@ -3,7 +3,8 @@
 import logging
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 
 from config import SettingsDep
 from database import DbSession
@@ -15,6 +16,8 @@ from schemas import (
     RegisterRequest,
     ResetPasswordRequest,
 )
+from services.auth import create_access_token
+from services.email import send_email
 from utils import (
     build_reset_email_html,
     generate_reset_token,
@@ -27,11 +30,34 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+SIGNUP_BONUS_FTK = 1000.0
+
+
+def _send_signup_bonus(wallet_address: str) -> None:
+    """Bonus d'inscription : 1 000 FTK transférés on-chain depuis l'admin.
+
+    Best-effort en tâche de fond : si Ganache est hors ligne, l'inscription
+    reste valide et le bonus pourra être re-crédité manuellement.
+    """
+    from services.blockchain import get_blockchain_service
+
+    chain = get_blockchain_service()
+    if not chain or not chain.connected:
+        logger.warning("Bonus 1000 FTK non envoyé à %s (blockchain hors ligne)", wallet_address)
+        return
+    result = chain.transfer_from_admin(wallet_address, SIGNUP_BONUS_FTK)
+    if "error" in result:
+        logger.error("Bonus 1000 FTK échoué pour %s : %s", wallet_address, result["error"])
+    else:
+        logger.info("🎁 Bonus 1000 FTK crédité à %s (tx %s)", wallet_address, result["tx_hash"])
+
+
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
     db: DbSession,
     settings: SettingsDep,
+    background_tasks: BackgroundTasks,
 ):
     """Register a new user."""
     # Validate inputs
@@ -79,10 +105,21 @@ async def register(
 
     logger.info(f"✅ New user registered: {request.email}")
 
+    # Bonus de bienvenue on-chain, après la réponse HTTP (signature + minage)
+    background_tasks.add_task(_send_signup_bonus, user.wallet_address)
+
+    # Connexion immédiate : on renvoie un JWT comme /login, pour que le
+    # front puisse rediriger vers le dashboard sans re-saisir les identifiants.
+    token = create_access_token(user, settings)
+
     return {
         "message": "Registration successful",
+        "access_token": token,
+        "token_type": "bearer",
         "user_id": user.id,
         "email": user.email,
+        "role": user.role,
+        "wallet": user.wallet_address,
     }
 
 
@@ -137,15 +174,7 @@ async def login(
     user.locked_until = None
     await db.commit()
 
-    # Generate JWT token
-    from jose import jwt
-
-    payload = {
-        "sub": user.email,
-        "user_id": user.id,
-        "exp": datetime.utcnow() + timedelta(hours=settings.jwt_expiration_hours),
-    }
-    token = jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+    token = create_access_token(user, settings)
 
     logger.info(f"✅ User logged in: {request.email}")
 
@@ -162,6 +191,7 @@ async def login(
 async def forgot_password(
     request: ForgotPasswordRequest,
     db: DbSession,
+    settings: SettingsDep,
 ):
     """Request password reset."""
     if not is_valid_email(request.email):
@@ -178,23 +208,32 @@ async def forgot_password(
         return {"message": "If email exists, reset link will be sent"}
 
     # Generate reset token
+    expiry = settings.mail_reset_token_expiry_minutes
     raw_token, token_hash = generate_reset_token()
     reset_token = PasswordResetToken(
         user_id=user.id,
         token_hash=token_hash,
-        expires_at=datetime.utcnow() + timedelta(minutes=30),
+        expires_at=datetime.utcnow() + timedelta(minutes=expiry),
     )
     db.add(reset_token)
     await db.commit()
 
-    # Build reset link
-    reset_link = f"http://localhost:8000/reset-password?token={raw_token}"
-    _email_html = build_reset_email_html(reset_link, 30)
-    logger.debug("prepared email html bytes=%s", len(_email_html))
+    reset_link = f"{settings.app_base_url.rstrip('/')}/reset-password?token={raw_token}"
+    email_html = build_reset_email_html(reset_link, expiry)
 
-    # TODO: Send email
-    logger.info(f"📧 Password reset requested: {request.email}")
-    logger.debug(f"Reset link (not sent): {reset_link}")
+    # SMTP est bloquant → threadpool pour ne pas geler l'event loop
+    sent = await run_in_threadpool(
+        send_email,
+        settings,
+        user.email,
+        "Réinitialisation de votre mot de passe — GTA-IT Fintech",
+        email_html,
+    )
+    if sent:
+        logger.info(f"📧 Password reset email sent: {request.email}")
+    else:
+        # Filet de sécurité local : sans SMTP, le lien reste utilisable via les logs
+        logger.warning(f"📧 Reset email NOT sent — lien de secours : {reset_link}")
 
     return {"message": "If email exists, reset link will be sent"}
 

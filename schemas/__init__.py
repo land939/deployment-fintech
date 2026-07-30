@@ -73,6 +73,8 @@ class TransactionResponse(BaseModel):
     risk_score: int
     risk_level: str
     blocked: bool
+    reasons: list[str] = []
+    amount_eth: float | None = None  # équivalent ETH (taux FTK_ETH_RATE)
     created_at: datetime
 
 
@@ -97,7 +99,44 @@ class FraudCheckResponse(BaseModel):
     risk_score: int
     risk_level: str
     blocked: bool
+    reasons: list[str] = []
     features_used: int
+
+
+# ════════════════════════════════════════════════════════════════
+# Dispute (contestation) Schemas
+# ════════════════════════════════════════════════════════════════
+
+
+class DisputeCreateRequest(BaseModel):
+    """Contestation d'une transaction refusée."""
+
+    transaction_id: str
+    message: str = Field(..., min_length=10, max_length=2000)
+
+
+class DisputeDecisionRequest(BaseModel):
+    """Décision du super admin sur une contestation."""
+
+    accept: bool
+    response: str | None = Field(default=None, max_length=2000)
+
+
+# ════════════════════════════════════════════════════════════════
+# Wallet Schemas
+# ════════════════════════════════════════════════════════════════
+
+
+class WalletLinkRequest(BaseModel):
+    """Association d'un wallet MetaMask au compte."""
+
+    address: str = Field(..., pattern=r"^0x[a-fA-F0-9]{40}$")
+
+
+class TxConfirmRequest(BaseModel):
+    """Confirmation on-chain d'une transaction (hash MetaMask)."""
+
+    tx_hash: str = Field(..., pattern=r"^0x[a-fA-F0-9]{64}$")
 
 
 class ErrorResponse(BaseModel):
@@ -115,6 +154,8 @@ class StatusResponse(BaseModel):
     environment: str
     blockchain_connected: bool = False
     chain_id: int | None = None
+    token_address: str | None = None  # adresse du contrat FTK (pour MetaMask)
+    ftk_eth_rate: float | None = None  # 1 FTK en ETH
     ia_model_loaded: bool = False
     total_transactions: int = 0
 

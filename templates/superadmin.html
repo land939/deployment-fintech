@@ -3,71 +3,34 @@
 <head>
   <title>GTA-IT Fintech — Super Admin</title>
   {% include '_head.html' %}
+  <script src="/static/chart.umd.min.js"></script>
 </head>
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
 
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    {% include '_brand.html' %}
-    <div class="logo-sub">Fintech Platform</div>
-    <div class="admin-badge">★ SUPER ADMIN</div>
-  </div>
-
-  <nav class="nav" id="sideNav">
-    <div class="nav-label">Administration</div>
-    <a class="nav-item active" href="javascript:void(0)" data-target="sectionDashboard">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
-      <span class="nav-text">Dashboard Admin</span>
-    </a>
-    <a class="nav-item" href="javascript:void(0)" data-target="sectionTx">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13"/><path d="m14 3.5 3.5 3.5-3.5 3.5"/><path d="M20 17H7"/><path d="M10 13.5 6.5 17l3.5 3.5"/></svg></span>
-      <span class="nav-text">Transactions</span>
-      <span class="badge" id="badgeTx">0</span>
-    </a>
-    <a class="nav-item" href="javascript:void(0)" data-target="sectionAlerts">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 3.5v5c0 4.6-3.2 7.7-7.5 9-4.3-1.3-7.5-4.4-7.5-9v-5L12 3z"/><path d="M12 9v4"/><path d="M12 16.2v.1"/></svg></span>
-      <span class="nav-text">Alertes Fraude</span>
-      <span class="badge" id="badgeAlerts">0</span>
-    </a>
-
-    <div class="nav-label">Sécurité</div>
-    <a class="nav-item" href="javascript:void(0)" data-target="sectionChain">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 6 .4l2.4-2.4a4 4 0 1 0-5.7-5.7L11.4 7.6"/><path d="M14 10a4 4 0 0 0-6-.4L5.6 12a4 4 0 1 0 5.7 5.7l1.3-1.3"/></svg></span>
-      <span class="nav-text">Chaîne Blockchain</span>
-    </a>
-    <a class="nav-item" href="javascript:void(0)" data-target="sectionUsers">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M3.5 20c.5-3.5 2.8-5.5 5.5-5.5s5 2 5.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M17.5 14.7c2 .7 3.2 2.5 3.5 5.3"/></svg></span>
-      <span class="nav-text">Utilisateurs</span>
-    </a>
-
-    <a class="nav-item" href="javascript:void(0)" data-target="sectionModel">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6 20v-6"/><path d="M11 20V9"/><path d="M16 20v-9"/><path d="M21 20V5"/></svg></span>
-      <span class="nav-text">Performance IA</span>
-    </a>
-
-    <div class="nav-label">Plateforme</div>
-    <a class="nav-item" href="javascript:void(0)" data-target="sectionSend">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2.5 10.8 13.2"/><path d="M21.5 2.5 14.7 21.5l-3.9-8.3-8.3-3.9L21.5 2.5z"/></svg></span>
-      <span class="nav-text">Envoyer des FTK</span>
-    </a>
-  </nav>
-
-  <div class="sidebar-footer">
-    <div class="admin-info">
-      <div class="label">Connecté en tant que</div>
-      <div class="email" id="adminEmail">—</div>
-    </div>
-    <button class="logout-btn" onclick="logout()">Déconnexion</button>
-  </div>
-</aside>
-
-<div class="main">
+<div class="main full">
 
   <header class="topbar">
-    <div class="topbar-title">Super Admin <span>Console</span></div>
+    <div class="topbar-left">
+      <div class="topbar-brand">
+        {% include '_brand.html' %}
+        <div>
+          <div class="brand-title">Super Admin <span>Console</span></div>
+          <div class="brand-sub">GTA-IT Fintech</div>
+        </div>
+      </div>
+      <nav class="topnav">
+        <a href="#sectionTx">Transactions</a>
+        <a href="#sectionAlerts">Alertes</a>
+        <a href="#sectionDisputes">Contestations</a>
+        <a href="#sectionModel">Performance IA</a>
+        <a href="#sectionChain">Audit</a>
+        <a href="#sectionUsers">Utilisateurs</a>
+      </nav>
+    </div>
     <div class="topbar-right">
+      <span class="topbar-user" id="adminEmail"></span>
       <div class="chain-status" id="chainStatusBadge">
         <div class="dot"></div>
         <span id="chainStatusText">Vérification...</span>
@@ -77,13 +40,13 @@
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
       </button>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
     </div>
   </header>
 
   <div class="content">
 
-    <div id="sectionDashboard"></div>
-
+    <!-- ── STATISTIQUES GLOBALES ── -->
     <div class="stats-grid">
       <div class="stat-card purple">
         <div class="stat-label">Utilisateurs Totaux</div>
@@ -111,55 +74,55 @@
       </div>
     </div>
 
-    <div class="grid-2" style="margin-bottom:1.25rem;">
-
-      <div class="panel" id="sectionTx">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Transactions Récentes</div>
-            <div class="panel-sub">Toutes les transactions — vue super admin</div>
-          </div>
-          <span class="panel-count" id="txCount">0</span>
-        </div>
-        <div class="panel-body">
-          <div id="txTableBody">
-            <div class="loading">Chargement...</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel" id="sectionAlerts">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Alertes de Fraude IA</div>
-            <div class="panel-sub">Menaces détectées par le modèle</div>
-          </div>
-          <span class="panel-count" id="alertCount">0</span>
-        </div>
-        <div class="panel-body">
-          <div id="alertTableBody">
-            <div class="loading">Chargement...</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="panel" id="sectionChain">
+    <!-- ── TRANSACTIONS ── -->
+    <div class="panel" id="sectionTx" style="margin-bottom:1.25rem;">
       <div class="panel-header">
         <div>
-          <div class="panel-title">Chaîne d'Audit Blockchain</div>
-          <div class="panel-sub">Registre immuable — hash chain cryptographique</div>
+          <div class="panel-title">Transactions Récentes</div>
+          <div class="panel-sub">Cliquez « Détails » sur une transaction bloquée pour voir pourquoi, avant de l'autoriser</div>
         </div>
-        <button class="verify-btn" onclick="verifyChain()">✓ Vérifier l'intégrité</button>
+        <span class="panel-count" id="txCount">0</span>
       </div>
       <div class="panel-body">
-        <div class="chain-container" id="chainContainer">
-          <div class="loading">Chargement de la chaîne...</div>
+        <div id="txTableBody">
+          <div class="loading">Chargement...</div>
         </div>
       </div>
     </div>
 
+    <!-- ── ALERTES ── -->
+    <div class="panel" id="sectionAlerts" style="margin-bottom:1.25rem;">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Alertes de Fraude IA</div>
+          <div class="panel-sub">Menaces détectées par le modèle, avec les facteurs de risque</div>
+        </div>
+        <span class="panel-count" id="alertCount">0</span>
+      </div>
+      <div class="panel-body">
+        <div id="alertTableBody">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTESTATIONS ── -->
+    <div class="panel" id="sectionDisputes" style="margin-bottom:1.25rem;">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Contestations des Utilisateurs</div>
+          <div class="panel-sub">Demandes de déblocage — lisez le message puis Accepter (débloque) ou Refuser</div>
+        </div>
+        <span class="panel-count" id="disputeCount">0</span>
+      </div>
+      <div class="panel-body">
+        <div id="disputeTableBody">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PERFORMANCE IA (graphes dynamiques) ── -->
     <div class="panel" id="sectionModel" style="margin-bottom:1.25rem;">
       <div class="panel-header">
         <div>
@@ -172,39 +135,64 @@
         <div class="stats-row" id="modelMetricsRow" style="margin-bottom:1.25rem;">
           <div class="loading">Chargement des métriques...</div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start;">
-          <figure style="margin:0;">
-            <img src="/static/models/training_curves.png" alt="Courbes accuracy / loss"
-                 style="width:100%;border:1px solid var(--border);border-radius:10px;background:#fff;">
-            <figcaption style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
-              Exactitude et perte (log-loss) — entraînement vs validation, par itération de boosting
-            </figcaption>
-          </figure>
-          <figure style="margin:0;">
-            <img src="/static/models/confusion_matrix.png" alt="Matrice de confusion"
-                 style="width:100%;max-width:420px;border:1px solid var(--border);border-radius:10px;background:#fff;">
-            <figcaption style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
-              Matrice de confusion sur le jeu de test (25 % des données, stratifié)
-            </figcaption>
-          </figure>
-          <figure style="margin:0;">
-            <img src="/static/models/feature_importance.png" alt="Importance des features"
-                 style="width:100%;border:1px solid var(--border);border-radius:10px;background:#fff;">
-            <figcaption style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
+
+        <div class="grid-2" style="margin-bottom:0;">
+          <div>
+            <canvas id="accChart" height="190"></canvas>
+            <div style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
+              Exactitude (accuracy) — entraînement vs validation, par itération de boosting
+            </div>
+          </div>
+          <div>
+            <canvas id="lossChart" height="190"></canvas>
+            <div style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
+              Perte (log-loss) — descente de gradient, entraînement vs validation
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:1.25rem;margin-bottom:0;align-items:start;">
+          <div>
+            <div class="cm-grid" id="cmGrid"></div>
+            <div style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.6rem;text-align:center;">
+              Matrice de confusion — jeu de test (25 % des données, stratifié)
+            </div>
+          </div>
+          <div>
+            <canvas id="featChart" height="220"></canvas>
+            <div style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
               Importance des 11 features calculables en production
-            </figcaption>
-          </figure>
-          <figure style="margin:0;">
-            <img src="/static/models/model_schema.png" alt="Schéma global du modèle"
-                 style="width:100%;border:1px solid var(--border);border-radius:10px;background:#fff;">
-            <figcaption style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
-              Schéma global du pipeline et algorithme d'optimisation (gradient boosting sur log-loss)
-            </figcaption>
-          </figure>
+            </div>
+          </div>
+        </div>
+
+        <figure style="margin:1.25rem 0 0;">
+          <img src="/static/models/model_schema.png" alt="Schéma global du modèle"
+               style="width:100%;border:1px solid var(--border);border-radius:10px;background:#fff;">
+          <figcaption style="font-family:var(--mono);font-size:0.62rem;color:var(--gray2);margin-top:0.4rem;">
+            Schéma global du pipeline et algorithme d'optimisation (gradient boosting sur log-loss)
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <!-- ── CHAÎNE D'AUDIT ── -->
+    <div class="panel" id="sectionChain" style="margin-bottom:1.25rem;">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Chaîne d'Audit Blockchain</div>
+          <div class="panel-sub">Registre immuable — hash chain cryptographique</div>
+        </div>
+        <button class="verify-btn" id="verifyBtn" onclick="verifyChain()">✓ Vérifier l'intégrité</button>
+      </div>
+      <div class="panel-body">
+        <div class="chain-container" id="chainContainer">
+          <div class="loading">Chargement de la chaîne...</div>
         </div>
       </div>
     </div>
 
+    <!-- ── ENVOI FTK ── -->
     <div class="panel" id="sectionSend" style="margin-bottom:1.25rem;">
       <div class="panel-header">
         <div>
@@ -223,10 +211,6 @@
               <label>Montant (FTK)</label>
               <input type="number" id="adminSendAmount" placeholder="100" min="0.01" step="0.01"/>
             </div>
-            <div>
-              <label>Heure du jour</label>
-              <input type="number" id="adminSendHour" placeholder="14" min="0" max="23"/>
-            </div>
           </div>
           <button class="btn-send" id="adminSendBtn" onclick="adminSendTransaction()">
             Envoyer avec analyse IA
@@ -236,6 +220,7 @@
       </div>
     </div>
 
+    <!-- ── UTILISATEURS ── -->
     <div class="panel" id="sectionUsers">
       <div class="panel-header">
         <div>
@@ -260,14 +245,10 @@
   const role  = localStorage.getItem('role');
   const email = localStorage.getItem('email');
 
-  // Vérification accès super admin
   if (!token || role !== 'superadmin') {
     window.location.href = '/';
   }
-
-  if (email) {
-    document.getElementById('adminEmail').textContent = email;
-  }
+  if (email) document.getElementById('adminEmail').textContent = '· ' + email;
 
   const headers = {
     'Content-Type' : 'application/json',
@@ -277,24 +258,19 @@
   let prevAlertCount = 0;
   let prevTxCount    = 0;
 
-  // ── NAVIGATION SIDEBAR ──
-  function navScrollTo(targetId) {
-    const el = document.getElementById(targetId);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+  function chartColors() {
+    const s = getComputedStyle(document.documentElement);
+    const v = n => s.getPropertyValue(n).trim();
+    return { surface: v('--surface'), blue: v('--blue'), red: v('--primary'),
+             grid: v('--chart-grid'), ink: v('--gray'), green: v('--green') };
   }
 
-  function setNavActive(clickedItem) {
-    document.querySelectorAll('#sideNav .nav-item').forEach(i => i.classList.remove('active'));
-    clickedItem.classList.add('active');
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d) ? '—' : d.toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   }
-
-  document.querySelectorAll('#sideNav .nav-item[data-target]').forEach(item => {
-    item.addEventListener('click', function(e) {
-      e.preventDefault();
-      setNavActive(this);
-      navScrollTo(this.dataset.target);
-    });
-  });
 
   // ── TOAST ──
   function showToast(title, body) {
@@ -306,18 +282,20 @@
     setTimeout(() => toast.remove(), 6000);
   }
 
-  // ── LOAD STATS ──
+  // ── STATS ──
   async function loadStats() {
     try {
       const r = await fetch('/superadmin/api/stats', { headers });
       if (!r.ok) return;
       const d = await r.json();
 
-      document.getElementById('statUsers').textContent  = d.total_users  ?? '0';
-      document.getElementById('statTx').textContent     = d.total_tx     ?? '0';
-      document.getElementById('statFraud').textContent  = d.total_blocked ?? '0';
-      document.getElementById('statBlocks').textContent = d.total_blocks  ?? '0';
-      document.getElementById('statTxSub').textContent  = `taux fraude : ${d.block_ratio || '0%'}`;
+      document.getElementById('statUsers').textContent  = d.total_users        ?? '0';
+      document.getElementById('statTx').textContent     = d.total_transactions ?? '0';
+      document.getElementById('statFraud').textContent  = d.total_blocked      ?? '0';
+      document.getElementById('statBlocks').textContent = d.total_audit_blocks ?? '0';
+      const rate = d.total_transactions
+        ? ((d.total_blocked / d.total_transactions) * 100).toFixed(1) + '%' : '0%';
+      document.getElementById('statTxSub').textContent    = `taux fraude : ${rate}`;
       document.getElementById('statFraudSub').textContent = `alertes : ${d.total_alerts || 0}`;
       document.getElementById('statChainSub').textContent = d.chain_valid
         ? '✓ intégrité vérifiée'
@@ -327,7 +305,7 @@
       const text  = document.getElementById('chainStatusText');
       if (d.chain_valid) {
         badge.className = 'chain-status';
-        text.textContent = 'Chaîne intègre · ' + (d.total_blocks ?? 0) + ' blocs';
+        text.textContent = 'Chaîne intègre · ' + (d.total_audit_blocks ?? 0) + ' blocs';
       } else {
         badge.className = 'chain-status invalid';
         text.textContent = '⚠ Chaîne compromise !';
@@ -335,25 +313,23 @@
     } catch(e) { console.error('Stats error:', e); }
   }
 
-  // ── LOAD TRANSACTIONS ──
+  // ── TRANSACTIONS (avec détails de blocage) ──
   async function loadTransactions() {
     const container = document.getElementById('txTableBody');
     try {
       const r = await fetch('/superadmin/api/transactions?limit=30', { headers });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
+      const txs = d.transactions || [];
 
-      document.getElementById('txCount').textContent = d.total ?? 0;
+      document.getElementById('txCount').textContent = txs.length;
 
-      const badge = document.getElementById('badgeTx');
-      if (d.total > 0) { badge.textContent = d.total; badge.classList.add('show'); }
-
-      if (prevTxCount > 0 && d.total > prevTxCount) {
-        showToast('Nouvelle Transaction', `${d.total - prevTxCount} nouvelle(s) transaction(s) détectée(s).`);
+      if (prevTxCount > 0 && txs.length > prevTxCount) {
+        showToast('Nouvelle Transaction', `${txs.length - prevTxCount} nouvelle(s) transaction(s) détectée(s).`);
       }
-      prevTxCount = d.total;
+      prevTxCount = txs.length;
 
-      if (!d.transactions || d.transactions.length === 0) {
+      if (txs.length === 0) {
         container.innerHTML = '<div class="empty">Aucune transaction en base de données</div>';
         return;
       }
@@ -372,16 +348,20 @@
             </tr>
           </thead>
           <tbody>
-            ${d.transactions.map(tx => {
+            ${txs.map((tx, i) => {
               const statut = tx.blocked
                 ? '<span class="risk-badge status-blocked">BLOQUÉ</span>'
                 : tx.approved
                   ? '<span class="risk-badge status-ok" title="Blocage levé par le super admin">AUTORISÉ ✓</span>'
                   : '<span class="risk-badge status-ok">OK</span>';
+              const hasReasons = (tx.reasons || []).length > 0;
               const action = tx.blocked
-                ? `<button class="verify-btn" style="padding:0.3rem 0.7rem;font-size:0.65rem;"
+                ? `${hasReasons ? `<button class="details-btn" onclick="toggleTxDetails(${i}, this)">Détails</button> ` : ''}
+                   <button class="verify-btn" style="padding:0.3rem 0.7rem;font-size:0.65rem;"
                            onclick="approveTx('${tx.tx_ref}')">Autoriser</button>`
-                : '—';
+                : hasReasons
+                  ? `<button class="details-btn" onclick="toggleTxDetails(${i}, this)">Détails</button>`
+                  : '—';
               return `
               <tr>
                 <td style="color:var(--gray2);font-size:0.65rem;">${tx.tx_ref ? tx.tx_ref.slice(0,8)+'…' : 'N/A'}</td>
@@ -389,9 +369,22 @@
                 <td style="font-weight:700;color:var(--dark);">${parseFloat(tx.amount).toFixed(2)} FTK</td>
                 <td><span class="risk-badge risk-${tx.risk_level}">${tx.risk_level} (${tx.risk_score})</span></td>
                 <td>${statut}</td>
-                <td style="color:var(--gray);">${tx.timestamp ?? '—'}</td>
-                <td>${action}</td>
-              </tr>`;
+                <td style="color:var(--gray);">${fmtDate(tx.created_at)}</td>
+                <td style="white-space:nowrap;">${action}</td>
+              </tr>
+              ${hasReasons ? `
+              <tr class="details-row" id="txDetails-${i}" style="display:none;">
+                <td colspan="7">
+                  <div style="font-family:var(--mono);font-size:0.6rem;color:var(--primary);letter-spacing:0.12em;text-transform:uppercase;">
+                    Pourquoi l'IA a signalé cette transaction
+                  </div>
+                  <ul class="reason-list">${tx.reasons.map(x => `<li>${x}</li>`).join('')}</ul>
+                  <div style="font-size:0.72rem;color:var(--gray);margin-top:0.4rem;">
+                    Destinataire : <span style="font-family:var(--mono)">${tx.receiver || '—'}</span>
+                    · Vérifiez les justificatifs de l'utilisateur avant d'autoriser.
+                  </div>
+                </td>
+              </tr>` : ''}`;
             }).join('')}
           </tbody>
         </table>`;
@@ -400,29 +393,35 @@
     }
   }
 
-  // ── LOAD ALERTS ──
+  function toggleTxDetails(i, btn) {
+    const row = document.getElementById('txDetails-' + i);
+    if (!row) return;
+    const visible = row.style.display !== 'none';
+    row.style.display = visible ? 'none' : '';
+    btn.textContent = visible ? 'Détails' : 'Masquer';
+  }
+
+  // ── ALERTES ──
   async function loadAlerts() {
     const container = document.getElementById('alertTableBody');
     try {
       const r = await fetch('/superadmin/api/alerts?limit=20', { headers });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
+      const alerts = d.alerts || [];
 
-      document.getElementById('alertCount').textContent = d.total ?? 0;
+      document.getElementById('alertCount').textContent = alerts.length;
 
-      const badge = document.getElementById('badgeAlerts');
-      if (d.total > 0) { badge.textContent = d.total; badge.classList.add('show'); }
-
-      if (prevAlertCount > 0 && d.total > prevAlertCount) {
-        const newAlerts = d.total - prevAlertCount;
+      if (prevAlertCount > 0 && alerts.length > prevAlertCount) {
+        const newAlerts = alerts.length - prevAlertCount;
         showToast(
           `⚠ ${newAlerts} Nouvelle(s) Alerte(s) !`,
           `L'IA a détecté ${newAlerts} nouvelle(s) transaction(s) frauduleuse(s). Vérifiez immédiatement.`
         );
       }
-      prevAlertCount = d.total;
+      prevAlertCount = alerts.length;
 
-      if (!d.alerts || d.alerts.length === 0) {
+      if (alerts.length === 0) {
         container.innerHTML = '<div class="empty">Aucune alerte de fraude enregistrée</div>';
         return;
       }
@@ -434,29 +433,29 @@
               <th>Suspect</th>
               <th>Montant</th>
               <th>Niveau</th>
-              <th>Email Admin</th>
+              <th>Facteurs de risque détectés</th>
               <th>Statut</th>
               <th>Date</th>
             </tr>
           </thead>
           <tbody>
-            ${d.alerts.map(a => `
+            ${alerts.map(a => `
               <tr>
                 <td>${a.suspect ? a.suspect.slice(0,10)+'…' : 'N/A'}</td>
                 <td style="font-weight:700;color:var(--red);">${parseFloat(a.amount).toFixed(2)} FTK</td>
                 <td><span class="risk-badge risk-${a.risk_level}">${a.risk_level} (${a.risk_score})</span></td>
-                <td>
-                  <span class="risk-badge ${a.email_sent ? 'status-ok' : 'status-blocked'}">
-                    ${a.email_sent ? '✓ Envoyé' : '✗ Non envoyé'}
-                  </span>
+                <td style="max-width:340px;">
+                  ${(a.reasons || []).length
+                    ? `<ul class="reason-list">${a.reasons.map(x => `<li>${x}</li>`).join('')}</ul>`
+                    : '<span style="color:var(--gray2)">—</span>'}
                 </td>
                 <td>
-                  <span class="risk-badge ${a.resolved ? 'status-ok' : 'status-blocked'}"
-                        title="${a.resolved ? 'Blocage levé après justificatifs' : 'En attente de justificatifs'}">
-                    ${a.resolved ? 'Levée' : 'Active'}
+                  <span class="risk-badge ${a.blocked ? 'status-blocked' : 'status-ok'}"
+                        title="${a.blocked ? 'En attente de justificatifs' : 'Blocage levé après justificatifs'}">
+                    ${a.blocked ? 'Active' : 'Levée'}
                   </span>
                 </td>
-                <td style="color:var(--gray);">${a.timestamp ?? '—'}</td>
+                <td style="color:var(--gray);">${fmtDate(a.created_at)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -466,7 +465,89 @@
     }
   }
 
-  // ── LOAD BLOCKCHAIN CHAIN ──
+  // ── CONTESTATIONS ──
+  async function loadDisputes() {
+    const container = document.getElementById('disputeTableBody');
+    try {
+      const r = await fetch('/superadmin/api/disputes?limit=50', { headers });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const list = d.disputes || [];
+
+      document.getElementById('disputeCount').textContent =
+        d.pending > 0 ? `${d.pending} en attente` : list.length;
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty">Aucune contestation reçue</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(dp => {
+        const tx = dp.transaction || {};
+        const badge = dp.status === 'accepted'
+          ? '<span class="risk-badge status-ok">ACCEPTÉE ✓</span>'
+          : dp.status === 'rejected'
+            ? '<span class="risk-badge status-blocked">REFUSÉE ✕</span>'
+            : '<span class="risk-badge" style="background:var(--wash-gold);color:var(--gold);">EN ATTENTE</span>';
+        return `
+        <div class="fraud-card">
+          <div class="fraud-icon" style="${dp.status === 'pending' ? 'background:var(--wash-gold);color:var(--gold);' : ''}">
+            ${dp.status === 'accepted' ? '✓' : dp.status === 'rejected' ? '✕' : '⚖'}
+          </div>
+          <div class="fraud-info">
+            <div class="fraud-title">
+              ${parseFloat(tx.amount || 0).toFixed(2)} FTK — ${dp.user_email || '?'} &nbsp;${badge}
+            </div>
+            <div class="fraud-meta">
+              Tx ${dp.transaction_id ? dp.transaction_id.slice(0,8)+'…' : '—'}
+              · score IA ${tx.risk_score ?? '—'}/100 (${tx.risk_level ?? '—'})
+              · reçue le ${fmtDate(dp.created_at)}
+            </div>
+            <div style="font-size:0.78rem;color:var(--dark);margin-top:0.4rem;">Message : « ${dp.message} »</div>
+            ${(tx.reasons || []).length ? `<ul class="reason-list">${tx.reasons.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
+            ${dp.admin_response ? `<div style="font-size:0.75rem;color:var(--gray);margin-top:0.35rem;">Décision : « ${dp.admin_response} »</div>` : ''}
+            ${dp.status === 'pending' ? `
+            <div style="display:flex;gap:0.6rem;margin-top:0.7rem;">
+              <button class="verify-btn" style="padding:0.35rem 0.9rem;font-size:0.68rem;"
+                      onclick="decideDispute('${dp.id}', true)">✓ Accepter et débloquer</button>
+              <button class="details-btn" style="color:var(--primary);border-color:rgba(229,72,77,0.4);"
+                      onclick="decideDispute('${dp.id}', false)">✕ Refuser</button>
+            </div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      container.innerHTML = '<div class="empty">Erreur de chargement des contestations</div>';
+    }
+  }
+
+  async function decideDispute(id, accept) {
+    const reponse = prompt(
+      accept
+        ? 'Justification de l\'acceptation (envoyée à l\'utilisateur par email) :'
+        : 'Motif du refus (envoyé à l\'utilisateur par email) :',
+      accept ? 'Justificatifs valables, blocage levé.' : ''
+    );
+    if (reponse === null) return; // annulé
+    try {
+      const r = await fetch(`/superadmin/api/disputes/${id}/decide`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ accept, response: reponse || null })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        showToast(accept ? '✓ Contestation acceptée' : '✕ Contestation refusée',
+                  accept ? 'Transaction débloquée — utilisateur notifié par email.' : 'Blocage maintenu — utilisateur notifié par email.');
+        await Promise.all([loadDisputes(), loadStats(), loadTransactions(), loadAlerts(), loadChain()]);
+      } else {
+        showToast('Erreur', d.detail || 'Décision impossible.');
+      }
+    } catch(e) {
+      showToast('Erreur', 'Serveur injoignable : ' + e.message);
+    }
+  }
+
+  // ── CHAÎNE D'AUDIT ──
   async function loadChain() {
     const container = document.getElementById('chainContainer');
     try {
@@ -479,7 +560,6 @@
         return;
       }
 
-      // Les blocs arrivent en ordre décroissant (le plus récent en premier)
       container.innerHTML = d.blocks.map((blk, i) => {
         const isGenesis = blk.event_type === 'GENESIS';
         const isFraud   = blk.event_type === 'FRAUD_DETECTED';
@@ -508,7 +588,7 @@
               <div class="chain-hash">Hash : <span>${blk.block_hash ? blk.block_hash.slice(0,32)+'…' : '—'}</span></div>
               <div class="chain-hash">Prev : <span>${blk.previous_hash ? blk.previous_hash.slice(0,24)+'…' : '—'}</span></div>
               ${dataPreview ? `<div class="chain-hash">${dataPreview}</div>` : ''}
-              <div class="chain-ts">${blk.timestamp ?? '—'}</div>
+              <div class="chain-ts">${fmtDate(blk.timestamp)}</div>
             </div>
           </div>`;
       }).join('');
@@ -517,26 +597,19 @@
     }
   }
 
-  // ── VERIFY CHAIN ──
+  // ── VÉRIFICATION D'INTÉGRITÉ ──
   async function verifyChain() {
-    const btn = document.querySelector('.verify-btn');
+    const btn = document.getElementById('verifyBtn');
     btn.textContent = 'Vérification…';
     btn.disabled = true;
     try {
       const r = await fetch('/superadmin/api/chain/verify', { headers });
       const d = await r.json();
 
-      if (d.chain_valid) {
-        showToast(
-          '✓ Chaîne intègre',
-          `${d.total_blocks} bloc(s) vérifiés — aucune altération détectée.`
-        );
+      if (d.valid) {
+        showToast('✓ Chaîne intègre', `${d.blocks} bloc(s) vérifiés — aucune altération détectée.`);
       } else {
-        const broken = d.blocks.filter(b => !b.valid).length;
-        showToast(
-          '✕ Chaîne compromise !',
-          `${broken} bloc(s) invalide(s) sur ${d.total_blocks}. La chaîne a peut-être été altérée.`
-        );
+        showToast('✕ Chaîne compromise !', `Rupture détectée au bloc #${d.broken_at}. La chaîne a peut-être été altérée.`);
       }
       await loadStats();
     } catch(e) {
@@ -547,17 +620,18 @@
     }
   }
 
-  // ── LOAD USERS ──
+  // ── UTILISATEURS ──
   async function loadUsers() {
     const container = document.getElementById('usersTableBody');
     try {
       const r = await fetch('/superadmin/api/users', { headers });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
+      const users = d.users || [];
 
-      document.getElementById('userCount').textContent = d.total ?? 0;
+      document.getElementById('userCount').textContent = users.length;
 
-      if (!d.users || d.users.length === 0) {
+      if (users.length === 0) {
         container.innerHTML = '<div class="empty">Aucun utilisateur enregistré</div>';
         return;
       }
@@ -575,11 +649,11 @@
             </tr>
           </thead>
           <tbody>
-            ${d.users.map(u => `
+            ${users.map(u => `
               <tr>
                 <td style="color:var(--gray2);">${u.id}</td>
                 <td style="color:var(--dark);">${u.email ?? '—'}</td>
-                <td style="color:var(--gray);font-size:0.68rem;">${u.wallet_address ? u.wallet_address.slice(0,12)+'…' : 'N/A'}</td>
+                <td style="color:var(--gray);font-size:0.68rem;">${u.wallet ? u.wallet.slice(0,12)+'…' : 'N/A'}</td>
                 <td>
                   <span class="risk-badge ${u.role === 'superadmin' ? '' : 'status-ok'}"
                         style="${u.role === 'superadmin' ? 'background:var(--wash-gold);color:var(--gold);' : ''}">
@@ -591,7 +665,7 @@
                     ${u.is_active ? 'Actif' : 'Inactif'}
                   </span>
                 </td>
-                <td style="color:var(--gray);">${u.created_at ?? '—'}</td>
+                <td style="color:var(--gray);">${fmtDate(u.created_at)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -601,7 +675,7 @@
     }
   }
 
-  // ── AUTORISER UNE TRANSACTION BLOQUÉE (justificatifs reçus) ──
+  // ── AUTORISER UNE TRANSACTION BLOQUÉE ──
   async function approveTx(txRef) {
     if (!confirm('Autoriser cette transaction ?\n\nÀ ne faire qu\'après réception et vérification des justificatifs. La levée de blocage sera tracée dans la chaîne d\'audit.')) return;
     try {
@@ -613,20 +687,19 @@
         showToast('✓ Transaction autorisée', `Blocage levé pour ${txRef.slice(0,8)}… — tracé dans la chaîne d'audit.`);
         await Promise.all([loadStats(), loadTransactions(), loadAlerts(), loadChain()]);
       } else {
-        showToast('Erreur', d.error || 'Impossible d\'autoriser cette transaction.');
+        showToast('Erreur', d.detail || 'Impossible d\'autoriser cette transaction.');
       }
     } catch(e) {
       showToast('Erreur', 'Serveur injoignable : ' + e.message);
     }
   }
 
-  // ── ENVOI FTK PAR L'ADMIN (même parcours qu'un utilisateur) ──
+  // ── ENVOI FTK PAR L'ADMIN ──
   async function adminSendTransaction() {
     const btn    = document.getElementById('adminSendBtn');
     const result = document.getElementById('adminTxResult');
     const to     = document.getElementById('adminSendTo').value.trim();
     const amount = document.getElementById('adminSendAmount').value;
-    const hour   = document.getElementById('adminSendHour').value || new Date().getHours();
 
     if (!to || !amount) {
       result.className     = 'tx-result blocked';
@@ -643,21 +716,25 @@
       const r = await fetch('/transactions/send', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ receiver: to, amount: parseFloat(amount), hour_of_day: parseInt(hour) })
+        body: JSON.stringify({ receiver: to, amount: parseFloat(amount) })
       });
       const d = await r.json();
 
-      if (r.ok && d.status === 'SUCCESS') {
+      if (r.ok && !d.blocked) {
         result.className = 'tx-result success';
         result.innerHTML =
-          `✓ Transaction envoyée avec succès\n` +
+          `✓ Transaction acceptée\n` +
           `Score IA : ${d.risk_score}/100 (${d.risk_level})`;
-      } else {
+      } else if (r.ok && d.blocked) {
         result.className = 'tx-result blocked';
         result.innerHTML =
           `✕ Transaction BLOQUÉE par l'IA\n` +
           `Score risque : ${d.risk_score}/100 (${d.risk_level})\n` +
-          `Elle apparaît dans la liste — autorisez-la si justificatifs.`;
+          (d.reasons || []).map(x => `• ${x}`).join('\n') +
+          `\nElle apparaît dans la liste — autorisez-la si justificatifs.`;
+      } else {
+        result.className = 'tx-result blocked';
+        result.textContent = '⚠ ' + (d.detail || d.error || 'Requête invalide');
       }
       result.style.display = 'block';
       await Promise.all([loadStats(), loadTransactions(), loadAlerts()]);
@@ -671,13 +748,20 @@
     }
   }
 
-  // ── MÉTRIQUES DU MODÈLE IA ──
+  // ── PERFORMANCE IA : GRAPHES DYNAMIQUES ──
+  let accChartI, lossChartI, featChartI, lastMetrics = null;
+
+  window.addEventListener('themechange', () => {
+    if (lastMetrics) renderModelCharts(lastMetrics);
+  });
+
   async function loadModelMetrics() {
     const row = document.getElementById('modelMetricsRow');
     try {
       const r = await fetch('/superadmin/api/model/metrics', { headers });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const m = await r.json();
+      lastMetrics = m;
 
       document.getElementById('modelAuc').textContent = 'ROC-AUC : ' + m.roc_auc;
       document.getElementById('modelSub').textContent =
@@ -697,10 +781,105 @@
             <div class="ms-lbl" title="${sub}">${lbl}</div>
           </div>
         </div>`).join('');
+
+      renderModelCharts(m);
     } catch(e) {
       row.innerHTML = '<div class="empty">Métriques indisponibles — exécutez train_fraud_model.py</div>';
     }
   }
+
+  function renderModelCharts(m) {
+    const C = chartColors();
+    Chart.defaults.color = C.ink;
+
+    // ── Courbes d'apprentissage (si le JSON contient l'historique) ──
+    const cv = m.courbes;
+    if (cv && cv.iterations) {
+      const labels = Array.from({length: cv.iterations}, (_, i) => i + 1);
+      const lineOpts = (yTitle) => ({
+        responsive: true,
+        animation: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { boxWidth: 10, boxHeight: 10, font: { size: 11 } } } },
+        elements: { point: { radius: 0 }, line: { borderWidth: 2 } },
+        scales: {
+          x: { title: { display: true, text: 'Itération de boosting (arbre ajouté)', font: { size: 10 } },
+               grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 10 } } },
+          y: { title: { display: true, text: yTitle, font: { size: 10 } },
+               grid: { color: C.grid }, border: { display: false }, ticks: { font: { size: 10 } } }
+        }
+      });
+
+      if (accChartI) accChartI.destroy();
+      accChartI = new Chart(document.getElementById('accChart'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Entraînement', data: cv.accuracy_train, borderColor: C.blue, backgroundColor: C.blue },
+          { label: 'Validation',   data: cv.accuracy_val,   borderColor: C.red,  backgroundColor: C.red },
+        ]},
+        options: lineOpts('Exactitude')
+      });
+
+      if (lossChartI) lossChartI.destroy();
+      lossChartI = new Chart(document.getElementById('lossChart'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Entraînement', data: cv.logloss_train, borderColor: C.blue, backgroundColor: C.blue },
+          { label: 'Validation',   data: cv.logloss_val,   borderColor: C.red,  backgroundColor: C.red },
+        ]},
+        options: lineOpts('Log-loss')
+      });
+    }
+
+    // ── Matrice de confusion (grille HTML dynamique) ──
+    const cm = m.matrice;
+    if (cm) {
+      const fmt = n => n.toLocaleString('fr-FR');
+      document.getElementById('cmGrid').innerHTML = `
+        <div class="cm-corner">Réel \\ Prédit</div>
+        <div class="cm-head">Prédit : normal</div>
+        <div class="cm-head">Prédit : fraude</div>
+        <div class="cm-head">Réel : normal</div>
+        <div class="cm-cell good"><div class="cm-val">${fmt(cm.tn)}</div><div class="cm-lbl">Vrais négatifs</div></div>
+        <div class="cm-cell bad"><div class="cm-val">${fmt(cm.fp)}</div><div class="cm-lbl">Faux positifs</div></div>
+        <div class="cm-head">Réel : fraude</div>
+        <div class="cm-cell bad"><div class="cm-val">${fmt(cm.fn)}</div><div class="cm-lbl">Faux négatifs</div></div>
+        <div class="cm-cell good"><div class="cm-val">${fmt(cm.tp)}</div><div class="cm-lbl">Vrais positifs</div></div>`;
+    }
+
+    // ── Importance des features ──
+    const fi = m.importance_features;
+    if (fi) {
+      const entries = Object.entries(fi).sort((a, b) => a[1] - b[1]);
+      if (featChartI) featChartI.destroy();
+      featChartI = new Chart(document.getElementById('featChart'), {
+        type: 'bar',
+        data: {
+          labels: entries.map(e => e[0]),
+          datasets: [{ label: 'Importance', data: entries.map(e => e[1]),
+                       backgroundColor: C.red, borderRadius: 3 }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          animation: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: C.grid }, border: { display: false }, ticks: { font: { size: 10 } } },
+            y: { grid: { display: false }, ticks: { font: { size: 10, family: 'JetBrains Mono' } } }
+          }
+        }
+      });
+    }
+  }
+
+  // ── ANCRES TOPNAV ──
+  document.querySelectorAll('.topnav a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.querySelectorAll('.topnav a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+    });
+  });
 
   // ── LOAD ALL ──
   async function loadAll() {
@@ -708,20 +887,19 @@
       loadStats(),
       loadTransactions(),
       loadAlerts(),
+      loadDisputes(),
       loadChain(),
       loadUsers(),
       loadModelMetrics(),
     ]);
   }
 
-  // Chargement initial
   loadAll();
-
-  // Actualisation automatique toutes les 30 secondes
   setInterval(() => {
     loadStats();
     loadTransactions();
     loadAlerts();
+    loadDisputes();
   }, 30000);
 </script>
 </body>

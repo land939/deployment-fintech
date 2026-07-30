@@ -72,17 +72,38 @@ make run
 - UI : http://127.0.0.1:8765/
 - Docs OpenAPI : http://127.0.0.1:8765/docs
 
-### Lancer avec Docker (PostgreSQL)
+### Lancer avec Docker (PostgreSQL, Redis + Monitoring)
 
-Compose injecte `DATABASE_URL` Postgres pour le service `api` :
+Le fichier Compose orchestre l'API, la base de données PostgreSQL, le cache Redis, ainsi que toute la pile de supervision (Prometheus, Grafana, Node-Exporter, Postgres-Exporter, Redis-Exporter).
 
 ```bash
-make docker-up
-# ou
+# Copier les variables d'environnement Docker au besoin
+cp docker/.env.docker .env
+
+# Lancer tous les services en arrière-plan
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-Pour un Postgres local hors Docker, décommentez la ligne PostgreSQL dans `.env`.
+### URLs d'accès & Supervision
+
+| Service / Endpoint | URL | Identifiants / Description |
+|---|---|---|
+| **API Web (Fintech)** | http://127.0.0.1:8000/ | Application principale (Français) |
+| **Documentation API** | http://127.0.0.1:8000/docs | Swagger UI de l'API FastAPI |
+| **Endpoint Métriques** | http://127.0.0.1:8000/metrics | Métriques au format Prometheus |
+| **Prometheus Server** | http://127.0.0.1:9090/ | Visualisation des targets & alertes |
+| **Grafana Dashboards** | http://127.0.0.1:3000/ | Supervision riche. Login: `admin` / `admin` |
+
+### Alertes Prometheus actives
+
+1. **ApiDown** : L'API ne répond plus (`up{job="api"} == 0`).
+2. **PostgresDown** : PostgreSQL est injoignable (`pg_up == 0`).
+3. **DiskSpaceRunningLow** : Espace disque racine disponible < 20% (utilisation > 80%).
+
+### Dashboards pré-configurés (Grafana)
+
+- **GTA Fintech - Host Metrics** : Consommation CPU, Mémoire RAM, Espace Disque.
+- **GTA Fintech - Services Status** : État de santé de l'API, de la base Postgres, de Redis, et débit de requêtes.
 
 ### Tests
 
@@ -90,13 +111,6 @@ Pour un Postgres local hors Docker, décommentez la ligne PostgreSQL dans `.env`
 make test
 # ou
 python -m pytest tests/ -v --cov=. --cov-report=html
-```
-
-### Docker
-
-```bash
-make docker-build
-make docker-up
 ```
 
 ## Configuration

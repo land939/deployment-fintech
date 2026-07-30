@@ -49,13 +49,33 @@ curl http://localhost:8000/health
 
 ### 4. Access Services
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
+| Service | URL | Credentials / Notes |
+|---------|-----|---------------------|
 | API | http://localhost:8000 | - |
 | Swagger Docs | http://localhost:8000/docs | - |
-| ReDoc | http://localhost:8000/redoc | - |
+| Metrics Endpoint | http://localhost:8000/metrics | Exposes Prometheus metrics |
 | PostgreSQL | localhost:5432 | gta_user / gta_password |
 | Redis | localhost:6379 | - |
+| Prometheus | http://localhost:9090 | Scrapes all exporters and API |
+| Grafana | http://localhost:3000 | **admin / admin** (initial login) |
+| Node Exporter | http://localhost:9100/metrics | Host hardware and OS metrics |
+| Postgres Exporter | http://localhost:9187/metrics | Postgres performance metrics |
+| Redis Exporter | http://localhost:9121/metrics | Redis performance metrics |
+
+## 📊 Monitoring & Observability Stack
+
+The platform is integrated with a Prometheus + Grafana monitoring suite.
+
+### Dashboards Provisioning
+Two Grafana dashboards are pre-configured and automatically provisioned:
+1. **GTA Fintech - Host Metrics**: Monitors host performance metrics (CPU usage, Memory utilization, Root disk usage).
+2. **GTA Fintech - Services Status**: Tracks the availability and metrics of system components (API status, Postgres connection status, Redis connection status, and API requests/second rate).
+
+### Alert Rules Configured
+Prometheus is configured with the following active alert rules (defined in `docker/prometheus/alert_rules.yml`):
+- **ApiDown**: Triggers if the API service is unreachable for more than 30 seconds.
+- **PostgresDown**: Triggers if the PostgreSQL exporter reports that the DB is unreachable for more than 30 seconds.
+- **DiskSpaceRunningLow**: Triggers a warning if the host root disk storage usage exceeds 80%.
 
 ## 🔧 Common Commands
 

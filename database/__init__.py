@@ -43,6 +43,18 @@ async def init_db(database_url: str) -> tuple:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+    # Mini-migration : create_all n'ajoute pas de colonne aux tables
+    # existantes — on rattrape ici les colonnes ajoutées après coup.
+    # Transaction séparée : un ALTER qui échoue (colonne déjà là) ne doit
+    # pas invalider la transaction du create_all.
+    from sqlalchemy import text
+
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("ALTER TABLE transactions ADD COLUMN block_reasons TEXT"))
+    except Exception:
+        pass  # colonne déjà présente
+
     return engine, factory
 
 

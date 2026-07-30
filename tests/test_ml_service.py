@@ -74,3 +74,70 @@ def test_fraud_service_handles_missing_models(settings):
     )
     with pytest.raises(FileNotFoundError):
         FraudDetectionService(bad_settings)
+
+
+def test_explain_fraud_reasons():
+    """Les facteurs de risque lisibles reflètent les features anormales."""
+    from services.ml import explain_fraud
+
+    reasons = explain_fraud(
+        {
+            "amount": 5000.0,
+            "hour": 3,
+            "day_of_week": 2,
+            "account_age_days": 120,
+            "tx_count_1h": 6,
+            "tx_count_24h": 8,
+            "amount_avg_ratio": 40.0,
+            "seconds_since_last_tx": 30,
+            "is_new_receiver": 1,
+            "unique_receivers_24h": 6,
+            "past_fraud_count": 2,
+        }
+    )
+    joined = " ".join(reasons)
+    assert any("aberrant" in r for r in reasons)
+    assert "Rafale" in joined
+    assert "nocturne" in joined
+    assert "Récidive" in joined
+
+    # Transaction banale : aucune raison
+    assert (
+        explain_fraud(
+            {
+                "amount": 50.0,
+                "hour": 14,
+                "day_of_week": 2,
+                "account_age_days": 120,
+                "tx_count_1h": 0,
+                "tx_count_24h": 2,
+                "amount_avg_ratio": 1.0,
+                "seconds_since_last_tx": 50000,
+                "is_new_receiver": 0,
+                "unique_receivers_24h": 1,
+                "past_fraud_count": 0,
+            }
+        )
+        == []
+    )
+
+
+def test_predict_fraud_blocked_includes_reasons(fraud_service):
+    """Toute transaction bloquée doit expliquer pourquoi."""
+    result = fraud_service.predict_fraud(
+        {
+            "amount": 5000.0,
+            "hour": 3,
+            "day_of_week": 2,
+            "account_age_days": 200,
+            "tx_count_1h": 0,
+            "tx_count_24h": 1,
+            "amount_avg_ratio": 50.0,
+            "seconds_since_last_tx": 90000,
+            "is_new_receiver": 1,
+            "unique_receivers_24h": 1,
+            "past_fraud_count": 0,
+        }
+    )
+    if result["blocked"]:
+        assert len(result["reasons"]) >= 1

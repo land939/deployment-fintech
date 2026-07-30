@@ -1,0 +1,29 @@
+groups:
+  - name: gta_alerts
+    rules:
+      - alert: ApiDown
+        expr: up{job="api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "API is down"
+          description: "The GTA Fintech API is unreachable for more than 30 seconds."
+
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Postgres database is down"
+          description: "The Postgres database exporter reports that Postgres is down."
+
+      - alert: DiskSpaceRunningLow
+        expr: 100 - ((node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"}) > 80
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space running low"
+          description: "Disk usage on the host is above 80%."

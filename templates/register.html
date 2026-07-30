@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <title>GTA-IT Fintech — Inscription</title>
+  <title>GTA-IT Fintech  Inscription</title>
   {% include '_head.html' %}
 </head>
 <body class="auth">
@@ -137,10 +137,14 @@
         if (res.ok) {
           localStorage.setItem('token',  data.access_token);
           localStorage.setItem('wallet', data.wallet);
-          showSuccess('✓ ' + (data.message || 'Compte créé avec succès !'));
-          setTimeout(() => { window.location.href = '/dashboard'; }, 1400);
+          localStorage.setItem('email',  data.email || '');
+          localStorage.setItem('role',   data.role  || 'user');
+          showSuccess('✓ Compte créé avec succès ! Redirection…');
+          setTimeout(() => {
+            window.location.href = data.role === 'superadmin' ? '/superadmin' : '/dashboard';
+          }, 1400);
         } else {
-          showError('⚠ ' + (data.error || 'Erreur lors de la création du compte.'));
+          showError('⚠ ' + parseError(data));
           btn.disabled = false;
         }
       } catch {
@@ -151,6 +155,25 @@
         spinner.style.display = 'none';
       }
     });
+
+    /* Traduit la réponse d'erreur de l'API en message lisible.
+       - 400 (validation métier) : detail est une chaîne
+       - 422 (validation Pydantic) : detail est une liste d'objets */
+    function parseError(data) {
+        let d = data && data.detail;
+        if (Array.isArray(d)) d = d[0] && d[0].msg;
+        d = d || data.error || '';
+        const map = {
+            'String should have at least 8 characters': 'Le mot de passe doit contenir au moins 8 caractères.',
+            'String should match pattern': 'Adresse wallet invalide (format 0x… attendu, 40 caractères hexadécimaux).',
+            'Password must be at least 8 characters with letters and numbers': 'Mot de passe trop faible : au moins 8 caractères, avec lettres et chiffres.',
+            'Invalid email format': 'Format d\'email invalide.',
+            'Invalid wallet address format': 'Adresse wallet invalide (format 0x… attendu).',
+            'Email already registered': 'Cet email est déjà utilisé — connectez-vous plutôt.',
+        };
+        for (const key in map) if (d.startsWith(key)) return map[key];
+        return d || 'Erreur lors de la création du compte.';
+    }
 
     function showError(msg)   { const el = document.getElementById('alertError');   el.textContent = msg; el.style.display = 'block'; }
     function showSuccess(msg) { const el = document.getElementById('alertSuccess'); el.textContent = msg; el.style.display = 'block'; }

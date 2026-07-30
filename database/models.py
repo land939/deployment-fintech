@@ -67,6 +67,7 @@ class Transaction(Base):
     risk_level = Column(String(20), default="LOW")  # LOW | MEDIUM | HIGH | CRITICAL
     blocked = Column(Boolean, default=False)
     approved = Column(Boolean, default=False)  # déblocage manuel superadmin
+    block_reasons = Column(Text, nullable=True)  # JSON: facteurs de blocage lisibles
     tx_hash_ref = Column(String(66), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -105,6 +106,38 @@ class FraudAlert(Base):
         Index("ix_fraud_alert_risk", "risk_level", "created_at"),
         Index("ix_fraud_alert_address", "suspect_address"),
     )
+
+
+class Dispute(Base):
+    """Contestation d'une transaction refusée par la détection de fraude.
+
+    L'utilisateur explique pourquoi sa transaction est légitime ; le super
+    admin tranche : accepted (blocage levé) ou rejected. Statuts :
+    pending | accepted | rejected.
+    """
+
+    __tablename__ = "disputes"
+
+    id = Column(String(36), primary_key=True, index=True)
+    transaction_id = Column(String(36), ForeignKey("transactions.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    message = Column(Text, nullable=False)  # explication de l'utilisateur
+    status = Column(String(20), default="pending", nullable=False)
+    admin_response = Column(Text, nullable=True)  # justification de la décision
+    created_at = Column(DateTime, default=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+
+    user = relationship("User")
+    transaction = relationship("Transaction")
+
+    __table_args__ = (
+        Index("ix_dispute_status", "status", "created_at"),
+        Index("ix_dispute_user", "user_id", "created_at"),
+    )
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("status", "pending")
+        super().__init__(**kwargs)
 
 
 class AuditLog(Base):

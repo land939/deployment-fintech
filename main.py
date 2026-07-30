@@ -15,10 +15,12 @@ from config import get_settings, setup_logging, validate_required_settings
 from database import init_db, set_session_factory
 from database.bootstrap import ensure_superadmin
 from database.models import Transaction
-from routers import auth, fraud, pages, superadmin, transactions
+from routers import auth, disputes, fraud, pages, superadmin, transactions, wallet
 from schemas import HealthResponse, StatusResponse
-from services.blockchain import BlockchainService
+from services.blockchain import BlockchainService, set_blockchain_service
 from services.ml import FraudDetectionService, set_fraud_service
+from services.rates import get_ftk_eth_rate
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent
@@ -53,6 +55,7 @@ async def lifespan(app: FastAPI):
         logger.warning("Modèles ML indisponibles: %s", e)
 
     blockchain_service = BlockchainService(settings)
+    set_blockchain_service(blockchain_service)
     logger.info(
         "Blockchain %s",
         "connectée" if blockchain_service.connected else "indisponible",
@@ -61,6 +64,7 @@ async def lifespan(app: FastAPI):
     yield
 
     set_fraud_service(None)
+    set_blockchain_service(None)
     if engine:
         await engine.dispose()
 
@@ -71,6 +75,9 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+
+# Instrument the FastAPI app for Prometheus monitoring
+Instrumentator().instrument(app).expose(app)
 
 _settings = get_settings()
 app.add_middleware(
@@ -89,6 +96,8 @@ app.include_router(pages.router)
 app.include_router(auth.router)
 app.include_router(fraud.router)
 app.include_router(transactions.router)
+app.include_router(disputes.router)
+app.include_router(wallet.router)
 app.include_router(superadmin.router)
 
 
@@ -119,6 +128,9 @@ async def get_status():
         "environment": settings.environment if settings else "unknown",
         "blockchain_connected": connected,
         "chain_id": chain_id,
+        # Infos nécessaires au front pour MetaMask + conversion FTK/ETH
+        "token_address": settings.token_address if settings else None,
+        "ftk_eth_rate": get_ftk_eth_rate(settings) if settings else None,
         "ia_model_loaded": fraud_service is not None,
         "total_transactions": total_tx,
     }

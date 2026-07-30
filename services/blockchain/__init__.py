@@ -10,6 +10,19 @@ from config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
+_blockchain_service: "BlockchainService | None" = None
+
+
+def set_blockchain_service(service: "BlockchainService | None") -> None:
+    """Enregistre le singleton chargé au lifespan (même pattern que services/ml)."""
+    global _blockchain_service
+    _blockchain_service = service
+
+
+def get_blockchain_service() -> "BlockchainService | None":
+    """Retourne le singleton (None si blockchain désactivée/indisponible)."""
+    return _blockchain_service
+
 
 def _is_configured_address(address: str | None) -> bool:
     """True when address is a non-zero Ethereum address."""
@@ -147,6 +160,60 @@ class BlockchainService:
         except Exception as e:
             logger.error(f"❌ Transaction building failed: {e}")
             return {"error": str(e)}
+
+    def transfer_from_admin(self, to_address: str, amount_tokens: float) -> dict:
+        """Transfert FTK signé par la clé privée admin et envoyé on-chain.
+
+        Utilisé pour le bonus d'inscription (1 000 FTK) et les crédits
+        opérés par la plateforme. Retourne {"tx_hash": ...} ou {"error": ...}.
+        """
+        if not self.connected or not self.token_contract:
+            return {"error": "Blockchain non connectée"}
+        if not self.settings.admin_private_key or not self.settings.admin_address:
+            return {"error": "Clé admin non configurée"}
+
+        try:
+            admin = Web3.to_checksum_address(self.settings.admin_address)
+            tx = self.token_contract.functions.transfer(
+                Web3.to_checksum_address(to_address),
+                int(amount_tokens * 10**18),
+            ).build_transaction(
+                {
+                    "from": admin,
+                    "gas": 100_000,
+                    "gasPrice": self.w3.eth.gas_price,
+                    "nonce": self.w3.eth.get_transaction_count(admin),
+                    "chainId": self.w3.eth.chain_id,
+                }
+            )
+            signed = self.w3.eth.account.sign_transaction(
+                tx, private_key=self.settings.admin_private_key
+            )
+            raw = getattr(signed, "raw_transaction", None) or signed.rawTransaction
+            tx_hash = self.w3.eth.send_raw_transaction(raw)
+            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+            if receipt.status != 1:
+                return {"error": "Transaction on-chain rejetée (revert)"}
+            logger.info("🔗 %s FTK transférés à %s (tx %s)", amount_tokens, to_address, tx_hash.hex())
+            return {"tx_hash": tx_hash.hex(), "block": receipt.blockNumber}
+        except Exception as e:
+            logger.error("❌ Transfert admin échoué: %s", e)
+            return {"error": str(e)}
+
+    def get_transaction_receipt(self, tx_hash: str) -> dict | None:
+        """Reçu on-chain d'une transaction (None si introuvable/hors ligne)."""
+        if not self.connected:
+            return None
+        try:
+            receipt = self.w3.eth.get_transaction_receipt(tx_hash)
+            return {
+                "status": int(receipt.status),
+                "block": receipt.blockNumber,
+                "from": receipt["from"],
+                "to": receipt["to"],
+            }
+        except Exception:
+            return None
 
     def get_network_info(self) -> dict:
         """Get blockchain network information."""
