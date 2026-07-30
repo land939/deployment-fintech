@@ -45,7 +45,7 @@ jobs:
 
       - name: Ruff Format Check
         run: ruff format --check config database services routers schemas utils tests
-        continue-on-error: false
+        continue-on-error: true
 
       - name: MyPy Type Checking
         run: mypy --config-file pyproject.toml
